@@ -77,6 +77,35 @@ let perIPStats = {};
 
 let slushMiningEnabled = config.poolServer.slushMining && config.poolServer.slushMining.enabled;
 
+// PPLNS (Levcoin patch): shares paid from a rolling window instead of per round.
+let pplnsEnabled = !!(config.poolServer.pplns && config.poolServer.pplns.enabled);
+let pplnsWindowFactor = pplnsEnabled ? (config.poolServer.pplns.windowFactor || 2) : 0;
+let pplnsMaxShares = pplnsEnabled ? (config.poolServer.pplns.maxShares || 500000) : 0;
+if (pplnsEnabled && slushMiningEnabled) {
+	log('error', logSystem, 'pplns and slushMining cannot both be enabled');
+	process.exit(1);
+}
+// KEYS[1] share log (newest first), KEYS[2] output scores hash, ARGV[1] window size in difficulty.
+// Walks newest to oldest until the window is filled; the oldest share counts only partially.
+// Returns the difficulty actually covered (less than the window if the log is too short).
+const PPLNS_WINDOW_SCRIPT = `
+local window = tonumber(ARGV[1])
+local total, start, chunk = 0, 0, 1000
+while total < window do
+	local items = redis.call('lrange', KEYS[1], start, start + chunk - 1)
+	if #items == 0 then break end
+	for _, item in ipairs(items) do
+		local sep = string.find(item, ':[^:]*$')
+		local login = string.sub(item, 1, sep - 1)
+		local diff = math.min(tonumber(string.sub(item, sep + 1)), window - total)
+		redis.call('hincrbyfloat', KEYS[2], login, string.format('%.17g', diff))
+		total = total + diff
+		if total >= window then break end
+	end
+	start = start + chunk
+end
+return tostring(total)`;
+
 if (!config.poolServer.paymentId) {
 	config.poolServer.paymentId = {};
 }
@@ -1061,9 +1090,25 @@ function recordShareData (miner, job, shareDiff, blockCandidate, hashHex, shareT
 		redisCommands.push(['expire', `${coin}:unique_workers:${login}~${workerName}`, (86400 * cleanupInterval)]);
 	}
 
+	// PPLNS: keep a rolling log of shared-pool shares, newest first, as "login:difficulty"
+	if (pplnsEnabled && rewardType === 'prop' && pool === null) {
+		redisCommands.push(['lpush', `${coin}:pplns:shares`, [login, job.difficulty].join(':')]);
+		redisCommands.push(['ltrim', `${coin}:pplns:shares`, 0, pplnsMaxShares - 1]);
+	}
+
 	if (blockCandidate) {
 		redisCommands.push(['hset', `${coin}:stats`, `lastBlockFound${rewardType}`, Date.now()]);
-		redisCommands.push(['rename', `${coin}:scores:prop:roundCurrent`, coin + ':scores:prop:round' + job_height]);
+		if (pplnsEnabled && rewardType === 'prop' && pool === null) {
+			// Pay the last N difficulty of shares (N = windowFactor x network difficulty) across round
+			// boundaries. Runs in the same MULTI as the winning share's LPUSH, so it is included.
+			// The round's PROP scores are discarded; the unlocker pays from scores:prop:round<height>.
+			redisCommands.push(['del', `${coin}:scores:prop:round${job_height}`]);
+			redisCommands.push(['eval', PPLNS_WINDOW_SCRIPT, 2, `${coin}:pplns:shares`, `${coin}:scores:prop:round${job_height}`,
+				Math.floor(blockTemplate.difficulty * pplnsWindowFactor)]);
+			redisCommands.push(['del', `${coin}:scores:prop:roundCurrent`]);
+		} else {
+			redisCommands.push(['rename', `${coin}:scores:prop:roundCurrent`, coin + ':scores:prop:round' + job_height]);
+		}
 		redisCommands.push(['rename', `${coin}:scores:solo:roundCurrent`, coin + ':scores:solo:round' + job_height]);
 		redisCommands.push(['rename', `${coin}:shares_actual:prop:roundCurrent`, `${coin}:shares_actual:prop:round${job_height}`]);
 		redisCommands.push(['rename', `${coin}:shares_actual:solo:roundCurrent`, `${coin}:shares_actual:solo:round${job_height}`]);
@@ -1109,6 +1154,11 @@ function recordShareData (miner, job, shareDiff, blockCandidate, hashHex, shareT
 						.reduce(function (p, c) {
 							return p + parseInt(workerShares[c])
 						}, 0);
+				}
+				if (pplnsEnabled && rewardType === 'prop' && pool === null) {
+					let windowSize = Math.floor(blockTemplate.difficulty * pplnsWindowFactor);
+					log('info', logSystem, 'PPLNS block %d: window %d, covered %d (%d%%) across %d miners',
+						[job_height, windowSize, totalScore, Math.round(100 * totalScore / windowSize), Object.keys(workerScores).length]);
 				}
 				redisClient.zadd(coin + ':blocks:candidates', job_height, [
 					rewardType,

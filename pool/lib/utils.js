@@ -25,7 +25,9 @@ exports.instanceId = function () {
  * Validate miner address
  **/
 var addressBase58Prefix = config.poolServer.pubAddressPrefix ? parseInt(config.poolServer.pubAddressPrefix) : parseInt(cnUtil.address_decode(Buffer.from(config.poolServer.poolAddress)).toString());
-let integratedAddressBase58Prefix = config.poolServer.intAddressPrefix ? parseInt(config.poolServer.intAddressPrefix) : addressBase58Prefix + 1;
+// intAddressPrefix: false disables integrated addresses (coins without them, e.g. Levcoin),
+// so the wallet never gets a payout destination it cannot parse.
+let integratedAddressBase58Prefix = config.poolServer.intAddressPrefix === false ? null : config.poolServer.intAddressPrefix ? parseInt(config.poolServer.intAddressPrefix) : addressBase58Prefix + 1;
 let subAddressBase58Prefix = config.poolServer.subAddressPrefix ? parseInt(config.poolServer.subAddressPrefix) : "N/A";
 
 // Get address prefix
@@ -36,7 +38,7 @@ function getAddressPrefix (address) {
 	if (addressPrefix) {
 		addressPrefix = parseInt(addressPrefix.toString());
 	}
-	if (!addressPrefix) {
+	if (!addressPrefix && integratedAddressBase58Prefix !== null) {
 		addressPrefix = cnUtil.address_decode_integrated(addressBuffer);
 	}
 
@@ -48,7 +50,7 @@ exports.getAddressPrefix = getAddressPrefix;
 exports.validateMinerAddress = function (address) {
 	let addressPrefix = getAddressPrefix(address);
 	if (addressPrefix === addressBase58Prefix) return true;
-	else if (addressPrefix === integratedAddressBase58Prefix) return true;
+	else if (integratedAddressBase58Prefix !== null && addressPrefix === integratedAddressBase58Prefix) return true;
 	else if (addressPrefix === subAddressBase58Prefix) return true;
 	return false;
 }
@@ -74,7 +76,7 @@ exports.validateChildMinerAddress = (address, index) => {
 // Return if value is an integrated address
 exports.isIntegratedAddress = function (address) {
 	let addressPrefix = getAddressPrefix(address);
-	return (addressPrefix === integratedAddressBase58Prefix);
+	return (integratedAddressBase58Prefix !== null && addressPrefix === integratedAddressBase58Prefix);
 }
 
 exports.determineRewardData = (value) => {

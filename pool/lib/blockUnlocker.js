@@ -13,6 +13,7 @@ let notifications = require('./notifications.js');
 let utils = require('./utils.js');
 
 let slushMiningEnabled = config.poolServer.slushMining && config.poolServer.slushMining.enabled;
+let pplnsEnabled = !!(config.poolServer.pplns && config.poolServer.pplns.enabled);
 
 // Initialize log system
 let logSystem = 'unlocker';
@@ -60,8 +61,22 @@ function runInterval () {
 			})
 		},
 
-		// Check if blocks are orphaned
+		// Get the current chain top. Levcoin's daemon reports block_header.depth as
+		// "blocks remaining until unlock" (60 at the tip, counting down and going negative)
+		// instead of confirmations, so maturity is computed from heights instead.
 		function (blocks, callback) {
+			apiInterfaces.rpcDaemon('getlastblockheader', {}, function (error, result) {
+				if (error || !result || !result.block_header) {
+					log('error', logSystem, 'Error with getlastblockheader RPC request %j', [error]);
+					callback(true);
+					return;
+				}
+				callback(null, blocks, result.block_header.height);
+			})
+		},
+
+		// Check if blocks are orphaned
+		function (blocks, topHeight, callback) {
 			async.filter(blocks, function (block, mapCback) {
 				let daemonType = config.daemonType ? config.daemonType.toLowerCase() : "default";
 				let blockHeight = ((daemonType === "forknote" || daemonType === "bytecoin") && config.blockUnlocker.fixBlockHeightRPC) ? block.height + 1 : block.height;
@@ -83,7 +98,7 @@ function runInterval () {
 					}
 					let blockHeader = result.block_header;
 					block.orphaned = blockHeader.hash === block.hash ? 0 : 1;
-					block.unlocked = blockHeader.depth >= config.blockUnlocker.depth;
+					block.unlocked = topHeight - block.height >= config.blockUnlocker.depth;
 					block.reward = blockHeader.reward;
 					if (config.blockUnlocker.useFirstVout) {
 						let vout = JSON.parse(result.json).miner_tx.vout;
@@ -162,7 +177,9 @@ function runInterval () {
 					block.orphaned
 				].join(':')]);
 
-				if (block.workerScores && !slushMiningEnabled) {
+				// Under PPLNS the shares stay in the share log and count toward the next block's window,
+				// so merging them back into the current round would pay them twice.
+				if (block.workerScores && !slushMiningEnabled && !pplnsEnabled) {
 					let workerScores = block.workerScores;
 					Object.keys(workerScores).forEach(function (worker) {
 							orphanCommands.push(['hincrby', config.coin + ':scores:roundCurrent', worker, workerScores[worker]]);
