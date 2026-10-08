@@ -1,0 +1,3 @@
+[submodule "levcoin"]
+	path = levcoin
+	url = https://github.com/dobrimbozhilov/levcoin
