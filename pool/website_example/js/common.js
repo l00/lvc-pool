@@ -1,19 +1,4 @@
-/**
- * Common javascript code for cryptonote-nodejs-pool
- * Author: Daniel Vandal
- * GitHub: https://github.com/dvandal/cryptonote-nodejs-pool
- **/
-
-/**
- * Layout
- **/
-
-// Collapse menu on load for mobile devices
 $('#menu-content').collapse('hide');
-
-/**
- * Cookies handler
- **/
 
 var docCookies = {
     getItem: function (sKey) {
@@ -48,19 +33,12 @@ var docCookies = {
     }
 };
 
-/**
- * Pages routing
- **/
-
-// Current page
 var currentPage;
 
-// Handle hash change
 window.onhashchange = function(){
     routePage();
 };
 
-// Route to page
 var xhrPageLoading;
 function routePage(loadedCallback) {
     if (currentPage) currentPage.destroy();
@@ -93,11 +71,6 @@ function routePage(loadedCallback) {
     });
 }
 
-/**
- * Strings
- **/
-
-// Add .update() custom jQuery function to update text content
 $.fn.update = function(txt){
     var el = this[0];
     if (el && el.textContent !== txt)
@@ -105,7 +78,6 @@ $.fn.update = function(txt){
     return this;
 };
 
-// Update Text classes
 function updateTextClasses(className, text){
     var els = document.getElementsByClassName(className);
     if (els) {
@@ -117,7 +89,6 @@ function updateTextClasses(className, text){
     }
 }
 
-// Update Text content
 function updateText(elementId, text){
     var el = document.getElementById(elementId);
     if (el && el.textContent !== text){
@@ -126,12 +97,10 @@ function updateText(elementId, text){
     return el;
 }
 
-// Convert float to string
 function floatToString(float) {
     return float.toFixed(6).replace(/[0\.]+$/, '');
 }
 
-// Format number
 function formatNumber(number, delimiter){
     if(number != '') {
         number = number.split(delimiter).join('');
@@ -163,19 +132,16 @@ function formatNumber(number, delimiter){
     return '';
 }
 
-// Format date
 function formatDate(time){
     if (!time) return '';
     return new Date(parseInt(time) * 1000).toLocaleString();
 }
 
-// Format percentage
 function formatPercent(percent) {
     if (!percent && percent !== 0) return '';
     return percent + '%';
 }
 
-// Get readable time
 function getReadableTime(seconds){
     var units = [ [60, 'second'], [60, 'minute'], [24, 'hour'],
                 [7, 'day'], [4, 'week'], [12, 'month'], [1, 'year'] ];
@@ -197,7 +163,6 @@ function getReadableTime(seconds){
     return formatAmounts(amount,  units[units.length - 1][1]);
 }
 
-// Get readable hashrate
 function getReadableHashRateString(hashrate){
     var i = 0;
     var byteUnits = [' H', ' KH', ' MH', ' GH', ' TH', ' PH' ];
@@ -223,29 +188,21 @@ function getReadableCoin(stats, coins, digits, withoutSymbol) {
     return amount.toString() + (withoutSymbol ? '' : (' ' + stats.config.symbol));
 }
 
-
-// Format payment link
 function formatPaymentLink(hash, merged){
     return '<a target="_blank" href="' + getTransactionUrl(hash, merged) + '">' + hash + '</a>';
 }
 
-// Format difficulty
 function formatDifficulty(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-// Format luck / current effort
 function formatLuck(difficulty, shares, solo=false) {
-    // Only an approximation to reverse the calculations done in pool.js, because the shares with their respective times are not recorded in redis
-    // Approximation assumes equal pool hashrate for the whole round
-    // Could potentially be replaced by storing the sum of all job.difficulty in the redis db.
     if (lastStats.config.slushMiningEnabled) {
-        // Uses integral calculus to calculate the average of a dynamic function
-        var accurateShares = 1/lastStats.config.blockTime * (  // 1/blockTime to get the average
-            shares * lastStats.config.weight * (                  // Basically calculates the 'area below the graph' between 0 and blockTime
+        var accurateShares = 1/lastStats.config.blockTime * (
+            shares * lastStats.config.weight * (
                 1 - Math.pow(
                     Math.E,
-                    ((- lastStats.config.blockTime) / lastStats.config.weight)  // blockTime is equal to the highest possible result of (dateNowSeconds - scoreTime)
+                    ((- lastStats.config.blockTime) / lastStats.config.weight)
                 )
             )
         );
@@ -269,36 +226,24 @@ function formatLuck(difficulty, shares, solo=false) {
     }
 }
 
-/**
- * URLs
- **/
-
-// Return pool host
 function getPoolHost() {
     if (typeof poolHost != "undefined") return poolHost;
     if (lastStats.config.poolHost) return lastStats.config.poolHost;
     else return window.location.hostname;
 }
 
-// Return transaction URL
 function getTransactionUrl(id, stats) {
     if (stats && blockExplorers){
         return blockExplorers[stats.config.coin].transactionExplorer.replace('{symbol}', stats.config.symbol.toLowerCase()).replace('{id}', id);
     }
 }
 
-// Return blockchain explorer URL
 function getBlockchainUrl(id, stats) {
     if (stats && blockExplorers){
         return blockExplorers[stats.config.coin].blockchainExplorer.replace('{symbol}', stats.config.symbol.toLowerCase()).replace('{id}', id);
     }
 }
 
-/**
- * Tables
- **/
-
-// Sort table cells
 function sortTable() {
     var table = $(this).parents('table').eq(0),
         rows = table.find('tr:gt(0)').toArray().sort(compareTableRows($(this).index()));
@@ -311,7 +256,6 @@ function sortTable() {
     }
 }
 
-// Compare table rows
 function compareTableRows(index) {
     return function(a, b) {
         var valA = getCellValue(a, index), valB = getCellValue(b, index);
@@ -321,14 +265,9 @@ function compareTableRows(index) {
     }
 }
 
-// Get table cell value
 function getCellValue(row, index) {
     return $(row).children('td').eq(index).data("sort")
 }
-
-/**
- * Translations
- **/
 
 if (typeof langs == "undefined") {
     var langs = { en: 'English' };
@@ -366,7 +305,6 @@ var translate = function(data) {
     });
 }
 
-// Get language code from URL
 const $_GET = {};
 const args = location.search.substr(1).split(/&/);
 for (var i=0; i<args.length; ++i) {
@@ -377,7 +315,6 @@ for (var i=0; i<args.length; ++i) {
     }
 }
 
-// Load language
 function loadTranslations() {
     if (langData) {
         translate(langData);
@@ -391,9 +328,7 @@ function loadTranslations() {
     }
 }
 
-// Language selector
 function renderLangSelector() {
-    // Desktop
     var html = '';
     var numLangs = 0;
     if (langs) {
@@ -417,7 +352,6 @@ function renderLangSelector() {
         });
     }
 
-    // Mobile
     var html = '';
     var numLangs = 0;
     if (langs) {
@@ -441,13 +375,6 @@ function renderLangSelector() {
         });
     }
 }
-
-
-/*
-***************************************************************
-pool_block methods
-***************************************************************
-*/
 
 function poolBlocks_GenerateChart(data, displayedChart) {
     if (displayedChart[data.config.coin] || !data.charts.blocks || data.charts.blocks === "undefined" || !data.charts.blocksSolo || data.charts.blocksSolo === "undefined") return ;
@@ -532,7 +459,6 @@ function poolBlocks_GenerateChart(data, displayedChart) {
     displayedChart[data.config.coin] = true;
 }
 
-// Parse block data
 function poolBlocks_ParseBlock(height, serializedBlock, stats){
     var parts = serializedBlock.split(':');
     let block = {}
@@ -590,7 +516,6 @@ function poolBlocks_ParseBlock(height, serializedBlock, stats){
     return block;
 }
 
-// Get block row element
 function getBlockRowElement(block, jsonString, stats){
     function formatBlockLink(hash, stats){
         return '<a target="_blank" href="' + getBlockchainUrl(hash, stats) + '">' + hash + '</a>';
@@ -632,7 +557,6 @@ function getBlockRowElement(block, jsonString, stats){
     return row;
 }
 
-// Render blocks
 function poolBlocks_RenderBlocks(blocksResults, stats){
     var $blocksRows = $(`#blocksReport${stats.config.coin}_rows`);
 
@@ -664,7 +588,6 @@ function poolBlocks_RenderBlocks(blocksResults, stats){
     }
 }
 
-// Load more blocks button
 function poolBlocks_Setup(api, stats, xhrGetBlocks) {
     $(`#loadMoreBlocks${stats.config.coin}`).click(function(xhrGetBlocks){
         if (xhrGetBlocks[stats.config.coin]) xhrGetBlocks[stats.config.coin].abort();
@@ -698,7 +621,6 @@ function poolBlocks_InitTemplate(ranOnce, displayedChart, xhrGetBlocks) {
         poolBlocks_Setup(api, lastStats, xhrGetBlocks)
     }
 
-
     updateText(`blocksTotal${coin}`, lastStats.pool.totalBlocks.toString());
     if (lastStats.pool.lastBlockFound) {
         var d = new Date(parseInt(lastStats.pool.lastBlockFound)).toISOString();
@@ -727,7 +649,6 @@ function poolBlocks_InitTemplate(ranOnce, displayedChart, xhrGetBlocks) {
     }
 
     poolBlocks_RenderBlocks(lastStats.pool.blocks, lastStats);
-
 
     Object.keys(mergedStats).forEach(key => {
         if ($(`#blocksTabs li:contains(${key})`).length == 0) {
@@ -776,12 +697,6 @@ function poolBlocks_InitTemplate(ranOnce, displayedChart, xhrGetBlocks) {
         ranOnce = RunOnce()
 }
 
-/*
-***************************************************************
-top10miners methods
-***************************************************************
-*/
-
 function top10Miners_GetMinerCells(position, data){
     var miner = data.miner;
     var hashrate = data.hashrate ? data.hashrate : 0;
@@ -795,7 +710,6 @@ function top10Miners_GetMinerCells(position, data){
            '<td class="col5" data-sort="' + hashes + '">' + hashes + '</td>';
 }
 
-// Update top10 miners report
 function top10Miners_UpdateTop10(xhrGetMiners, endPoint, key) {
     if (xhrGetMiners[key])
         xhrGetMiners[key].abort()
@@ -854,12 +768,6 @@ function top10Miners_InitTemplate(xhrGetMiners, ranOnce) {
         ranOnce = RunOnce()
 }
 
-/*
-***************************************************************
-settings methods
-***************************************************************
-*/
-
 function settings_Setup(api, stats) {
 
     var address = getCurrentAddress(stats.config.coin);
@@ -869,7 +777,6 @@ function settings_Setup(api, stats) {
         settings_GetEmailAddress(api, address, stats);
     }
 
-    // Handle click on Set button
     $(`#payoutSetButton${stats.config.coin}`).click(function(){
         var address = $(`#yourAddress${stats.config.coin}`).val().trim();
         if (!address || address == '') {
@@ -891,7 +798,6 @@ function settings_Setup(api, stats) {
         settings_SetPayoutLevel(api, address, ip, level, stats);
     });
 
-    // Handle click on Enable button
     $(`#enableButton${stats.config.coin}`).click(function(){
         var address = $(`#yourAddress${stats.config.coin}`).val().trim();
         var ip = $(`#yourIP${stats.config.coin}`).val().trim();
@@ -899,7 +805,6 @@ function settings_Setup(api, stats) {
         settings_SetEmailNotifications(stats, api, email, address, ip, true);
     });
 
-    // Handle click on Disable button
     $(`#disableButton${stats.config.coin}`).click(function(){
         var address = $(`#yourAddress${stats.config.coin}`).val().trim();
         var ip = $(`#yourIP${stats.config.coin}`).val().trim();
@@ -908,9 +813,6 @@ function settings_Setup(api, stats) {
     });
 }
 
-/**
- * Error Message
- **/
 function settings_ShowError(id, message, extra, stats) {
     if (getTranslation(id)) message = getTranslation(id);
     message = message.trim();
@@ -919,20 +821,12 @@ function settings_ShowError(id, message, extra, stats) {
     $(`#action_update_message${stats.config.coin}`).removeClass().addClass('alert alert-danger');
 }
 
-/**
- * Success Message
- **/
 function settings_ShowSuccess(id, message, stats) {
     if (getTranslation(id)) message = getTranslation(id);
     $(`#action_update_message${stats.config.coin}`).text(message);
     $(`#action_update_message${stats.config.coin}`).removeClass().addClass('alert alert-success');
 }
 
-/**
- * Payout level
- **/
-
-// Get current payout level
 function settings_GetPayoutLevel(api, address, stats) {
     if (!address || address == '') 
         return;
@@ -950,7 +844,6 @@ function settings_GetPayoutLevel(api, address, stats) {
     });
 } 
 
-// Set payout level
 function settings_SetPayoutLevel(api, address, ip, level, stats) {
     let params = {
             address: address,
@@ -971,17 +864,11 @@ function settings_SetPayoutLevel(api, address, ip, level, stats) {
     });
 }
 
-/**
- * Email Notifications
- **/
-
-// Check if specified value is a valid email
 function settings_IsEmail(email) {
     var regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
     return regex.test(email);
 }
 
-// Get current email address for notifications
 function settings_GetEmailAddress(endPoint, address, stats) {
     if (!address || address == '') return;
     
@@ -999,7 +886,6 @@ function settings_GetEmailAddress(endPoint, address, stats) {
     });
 }
     
-// Set email address for notifications
 function settings_SetEmailNotifications(stats, endPoint, email, address, ip, enable) {
     var address = $(`#yourAddress${stats.config.coin}`).val().trim();
     if (!address || address == '') {
@@ -1085,13 +971,6 @@ function settings_InitTemplate(ranOnce) {
       ranOnce = RunOnce()
 }
 
-/*
-***************************************************************
-payments methods
-***************************************************************
-*/
-
-// Parse payment data
 function payments_ParsePayment(time, serializedPayment){
     var parts = serializedPayment.split(':');
     return {
@@ -1104,7 +983,6 @@ function payments_ParsePayment(time, serializedPayment){
     };
 }
 
-// Get payment cells
 function payments_GetPaymentCells(payment, stats){
     return '<td class="col1">' + formatDate(payment.time) + '</td>' +
            '<td class="col2">' + formatPaymentLink(payment.hash, stats) + '</td>' +
@@ -1114,7 +992,6 @@ function payments_GetPaymentCells(payment, stats){
            '<td class="col6">' + payment.recipients + '</td>';
 }
 
-// Get payment row element
 function payments_GetPaymentRowElement(payment, jsonString, stats){
     var row = document.createElement('tr');
     row.setAttribute(`data-json`, jsonString);
@@ -1126,7 +1003,6 @@ function payments_GetPaymentRowElement(payment, jsonString, stats){
     return row;
 }
 
-// Render payments data
 function payments_renderPayments(paymentsResults, stats){
     var $paymentsRows = $(`#paymentsReport${stats.config.coin}_rows`);
     for (var i = 0; i < paymentsResults.length; i += 2){
@@ -1157,7 +1033,6 @@ function payments_renderPayments(paymentsResults, stats){
     }
 }
 
-// Load more payments button
 function payments_Setup(xhrGetPayments, api, stats) {
   $(`#loadMorePayments${stats.config.coin}`).click(function(){
       if (xhrGetPayments[stats.config.coin]) xhrGetPayments[stats.config.coin].abort();
@@ -1225,12 +1100,6 @@ function payments_InitTemplate(xhrGetPayments, ranOnce) {
           ranOnce = RunOnce()
 }
 
-/*
-***************************************************************
-market methods
-***************************************************************
-*/
-
 function market_LoadMarketData(api, stats, loadedData, currencyPairs, xhrMarketGets, marketPrices) {
     if (loadedData[stats.config.coin]) return ;
         
@@ -1244,7 +1113,6 @@ function market_LoadMarketData(api, stats, loadedData, currencyPairs, xhrMarketG
     loadedData[stats.config.coin] = true;
 }
     
-// Market data polling (poll data every 5 minutes)
 function market_UpdateMarkets(api, stats, currencyPairs, xhrMarketGets, marketPrices){
     if (typeof marketCurrencies === 'undefined' || marketCurrencies.length === 0) return ;
     
@@ -1290,7 +1158,6 @@ function market_UpdateMarkets(api, stats, currencyPairs, xhrMarketGets, marketPr
     });
 }
 
-// Render market price
 function market_RenderMarketPrice(base, target, price, source, stats, marketPrices) {
     let icon = 'fa-money';
     if (target == 'BTC') icon = 'fa-btc';
@@ -1334,11 +1201,6 @@ function market_RenderMarketPrice(base, target, price, source, stats, marketPric
     );
 }
 
-/**
- * Market Charts
- **/
-
-// Create charts
 function market_CreateCharts(stats) {
     if (!stats || !stats.charts) return ;
     let data = stats.charts;
@@ -1418,7 +1280,6 @@ function market_CreateCharts(stats) {
     }
 }
 
-// Get chart data
 function market_GetGraphData(rawData) {
     let graphData = {
         names: [],
@@ -1433,8 +1294,6 @@ function market_GetGraphData(rawData) {
     return graphData;
 }
 
-
-// Calculate current estimation
 function market_CalcEstimateProfit(marketPrices){
     let rateUnit = Math.pow(1000,parseInt($('#calcHashUnit').data('mul')));
     let hashRate = parseFloat($('#calcHashRate').val()) * rateUnit;
@@ -1450,7 +1309,6 @@ function market_CalcEstimateProfit(marketPrices){
         if (profit) {
             updateText(`calcHashAmount${coin}1`, getReadableCoin(lastStats, profit));
             updateText(`calcHashAmount${coin}2`, market_GetCurrencyPriceText(lastStats, profit, marketPrices));
-            //return;
         } else {
             updateText(`calcHashAmount${coin}1`, '');
             updateText(`calcHashAmount${coin}2`, '');
@@ -1460,8 +1318,6 @@ function market_CalcEstimateProfit(marketPrices){
         updateText(`calcHashAmount${coin}1`, '');
         updateText(`calcHashAmount${coin}2`, '');
     }
-
-
 
     Object.keys(mergedStats).forEach(key => {
         try {
@@ -1490,8 +1346,6 @@ function market_CalcEstimateProfit(marketPrices){
     })
 }
 
-
-// Get price in specified currency
 function market_GetCurrencyPriceText(stats, coinsRaw, marketPrices) {
     if (!priceCurrency || !marketPrices[stats.config.coin] || !marketPrices[stats.config.coin][priceCurrency]) return ;
     let priceInCurrency = (Math.trunc(getReadableCoin(stats, coinsRaw, 2, true) * marketPrices[stats.config.coin][priceCurrency] * 100) / 100);
@@ -1536,7 +1390,6 @@ function market_InitTemplate(ranOnce, chartsInitialized, loadedData, marketPrice
 
    market_LoadMarketData(api, lastStats, loadedData, currencyPairs, xhrMarketGets, marketPrices);
 
-
    Object.keys(mergedStats).forEach(key => {
         if ($(`#blocksTabs li:contains(${key})`).length === 0) {
             chartsInitialized[key] = false;
@@ -1575,15 +1428,8 @@ sortElementList($(`#blocksTabs`), $(`#blocksTabs>li`), mergedStats)
         ranOnce = RunOnce()
 }
 
-/*
-***************************************************************
-workerstats methods
-***************************************************************
-*/
-
 function workerstats_Setup(stats, api, addressTimeout, xhrAddressPoll, xhrGetPayments ) {
 
-    // Enable time ago on last submitted share
     $(`#yourLastShare${stats.config.coin}`).timeago();
     
     $(`#lookUp${stats.config.coin}`).click(function(){
@@ -1610,9 +1456,7 @@ function workerstats_Setup(stats, api, addressTimeout, xhrAddressPoll, xhrGetPay
         $(`#lookUp${stats.config.coin} > span:first-child`).hide();
         $(`#lookUp${stats.config.coin} > span:last-child`).show();
 
-
         if (addressTimeout[stats.config.coin]) clearTimeout(addressTimeout[stats.config.coin]);
-
 
         if (xhrAddressPoll[stats.config.coin])
             xhrAddressPoll[stats.config.coin].abort();
@@ -1645,12 +1489,8 @@ function workerstats_Setup(stats, api, addressTimeout, xhrAddressPoll, xhrGetPay
             $(`#lookUp${stats.config.coin}`).click();
     });
 
-
-    // Handle sort on workers table
-    //$(`#workersReport${stats.config.coin} th.sort`).on('click', sortTable);
     $(`.workerStats th.sort`).on('click', sortTable);
 
-    // Load more payments button
     $(`#loadMorePayments${stats.config.coin}`).click(function(xhrGetPayments){
         if (xhrGetPayments[stats.config.coin]) 
             xhrGetPayments[stats.config.coin].abort();
@@ -1669,13 +1509,6 @@ function workerstats_Setup(stats, api, addressTimeout, xhrAddressPoll, xhrGetPay
         });
     });
 }
-
-/**
- * Miner statistics
- **/
-
-
-// Load current miner statistics
 
 function workerstats_FetchAddressStats(longpoll, stats, api, xhrAddressPoll){
     let address = getCurrentAddress(stats.config.coin)
@@ -1697,14 +1530,12 @@ function workerstats_FetchAddressStats(longpoll, stats, api, xhrAddressPoll){
             }
             $(`#addressError${stats.config.coin}`).hide();
 
-
             if (data.stats.lastShare) {
                 $(`#yourLastShare${stats.config.coin}`).timeago('update', new Date(parseInt(data.stats.lastShare) * 1000).toISOString());
-            } // AQUÍ
+            }
             else {
                 updateText(`yourLastShare${stats.config.coin}`, 'Never');
             }
-
 
             updateText(`yourHashrateHolder${stats.config.coin}`, (getReadableHashRateString(data.stats.hashrate) || '0 H') + '/sec');
             if ('hashrate_1h' in data.stats) {
@@ -1734,28 +1565,11 @@ function workerstats_FetchAddressStats(longpoll, stats, api, xhrAddressPoll){
                 }
             }
 
-
-            // $.getJSON(`https://api.coingecko.com/api/v3/coins/${stats.config.coin.toLowerCase()}?sparkline=true`, function() {})
-            //     .done(data => {
-            //         let paidTotalUSD = getReadableCoin(stats, totalCoins, 2, true) * data.market_data.current_price.usd;
-            //         let paid24hUSD = getReadableCoin(stats, last24hCoins, 2, true) * data.market_data.current_price.usd;
-            //         let paid7dUSD = getReadableCoin(stats, last7dCoins, 2, true) * data.market_data.current_price.usd;
-
-            //         updateText(`yourPaid${stats.config.coin}`, `${getReadableCoin(stats, totalCoins)} - $${paidTotalUSD.toFixed(2)}`);
-            //         updateText(`paid24h${stats.config.coin}`, `${getReadableCoin(stats, last24hCoins)} - $${paid24hUSD.toFixed(2)}`);
-            //         updateText(`paid7d${stats.config.coin}`, `${getReadableCoin(stats, last7dCoins)} - $${paid7dUSD.toFixed(2)}`);
-            //     })
-            //     .fail(() => {
                     updateText(`yourPaid${stats.config.coin}`, getReadableCoin(stats, totalCoins));
                     updateText(`paid24h${stats.config.coin}`, getReadableCoin(stats, last24hCoins));
                     updateText(`paid7d${stats.config.coin}`, getReadableCoin(stats, last7dCoins));
-            //     })
-
-
-
 
             updateText(`yourHashes${stats.config.coin}`, (data.stats.hashes || 0).toString());
-            //updateText(`yourPaid${stats.config.coin}`, getReadableCoin(stats, data.stats.paid));
             updateText(`yourPendingBalance${stats.config.coin}`, getReadableCoin(stats, data.stats.balance));
 
             let userRoundHashes = parseInt(data.stats.roundHashes || 0);
@@ -1763,7 +1577,6 @@ function workerstats_FetchAddressStats(longpoll, stats, api, xhrAddressPoll){
             let userRoundScore = parseFloat(data.stats.roundScore || 0);
             let poolRoundScore = parseFloat(stats.pool.roundScore || 0);
             let lastReward = parseFloat(stats.lastblock.reward || 0);
-
 
             let poolFee = stats.config.fee;
             if (Object.keys((stats.config.donation)).length) {
@@ -1791,7 +1604,6 @@ function workerstats_FetchAddressStats(longpoll, stats, api, xhrAddressPoll){
                 payoutEstimate = 0;
             updateText(`yourPayoutEstimate${stats.config.coin}`, getReadableCoin(stats, payoutEstimate));
 
-
             workerstats_RenderPayments(data.payments, stats);
 
             if (data.workers && data.workers.length > 0) {
@@ -1817,11 +1629,6 @@ function workerstats_FetchAddressStats(longpoll, stats, api, xhrAddressPoll){
     });
 }
 
-/**
- * Charts
- **/
-
-// Create charts
 function workerstats_CreateCharts(data, stats) {
     if (data.hasOwnProperty("charts")) {
         var graphData = {
@@ -1840,7 +1647,6 @@ function workerstats_CreateCharts(data, stats) {
     }
 }
 
-// Get chart data
 function workerstats_GetGraphData(stats, rawData, fixValueToCoins) {
     var graphData = {
         names: [],
@@ -1857,18 +1663,12 @@ function workerstats_GetGraphData(stats, rawData, fixValueToCoins) {
     return graphData;
 }
 
-/**
- * Workers report
- **/
-
-// Get worker row id
 function workerstats_GetWorkerRowId(workerName){
     var id = btoa(workerName);
     id = id.replace(/=/, '');
     return id;
 }
 
-// Get worker row element
 function workerstats_GetWorkerRowElement(worker, jsonString, stats){
     var row = document.createElement('tr');
     row.setAttribute('data-json', jsonString);
@@ -1880,7 +1680,6 @@ function workerstats_GetWorkerRowElement(worker, jsonString, stats){
     return row;
 }
 
-// Get worker cells
 function workerstats_GetWorkerCells(worker){
     let hashrate = worker.hashrate ? worker.hashrate : 0;
     let  hashrate1h = worker.hashrate_1h || 0;
@@ -1900,14 +1699,12 @@ function workerstats_GetWorkerCells(worker){
            '<td class="col5" data-sort="' + hashes + '">' + hashes + '</td>';
 }
 
-// Sort workers
 function workerstats_SortWorkers(a, b){
     var aName = a.name.toLowerCase();
     var bName = b.name.toLowerCase();
     return ((aName < bName) ? -1 : ((aName > bName) ? 1 : 0));
 }
 
-// Render workers list
 function workerstats_RenderWorkers(workersData, stats){
     workersData = workersData.sort(workerstats_SortWorkers);
 
@@ -1941,11 +1738,6 @@ function workerstats_RenderWorkers(workersData, stats){
     else $(`#workersReport${stats.config.coin} .avghr`).show();
 }
 
-/**
- * Payments report
- **/
-
-// Parse payment data
 function workerstats_ParsePayment(time, serializedPayment){
     var parts = serializedPayment.split(':');
     return {
@@ -1958,7 +1750,6 @@ function workerstats_ParsePayment(time, serializedPayment){
     };
 }
 
-// Get payment row element
 function workerstats_GetPaymentRowElement(payment, jsonString, stats){
     var row = document.createElement('tr');
     row.setAttribute('data-json', jsonString);
@@ -1970,7 +1761,6 @@ function workerstats_GetPaymentRowElement(payment, jsonString, stats){
     return row;
 }
 
-// Get payment cells
 function workerstats_GetPaymentCells(payment, stats){
     return '<td class="col1">' + formatDate(payment.time) + '</td>' +
            '<td class="col2">' + formatPaymentLink(payment.hash, stats) + '</td>' +
@@ -1978,7 +1768,6 @@ function workerstats_GetPaymentCells(payment, stats){
            '<td class="col4">' + payment.mixin + '</td>';
 }
 
-// Get summary row element
 function workerstats_GetSummaryRowElement(summary, jsonString, stats){
     var row = document.createElement('tr');
     row.setAttribute('data-json', jsonString);
@@ -1991,7 +1780,6 @@ function workerstats_GetSummaryRowElement(summary, jsonString, stats){
     return row;
 }
 
-// Get summary cells
 function workerstats_GetSummaryCells(summary, stats){
     var text = getTranslation('paymentSummaryMulti') ? getTranslation('paymentSummaryMulti') : 'On %DATE% you have received %AMOUNT% in %COUNT% payments';
     if (summary.count <= 1) text = getTranslation('paymentSummarySingle') ? getTranslation('paymentSummarySingle') : 'On %DATE% you have received %AMOUNT%';
@@ -2001,7 +1789,6 @@ function workerstats_GetSummaryCells(summary, stats){
     return '<td colspan="4">' + text + '</td>';
 }
 
-// Render payments
 function workerstats_RenderPayments(paymentsResults, stats){
     var $paymentsRows = $(`#paymentsReport_rows_${stats.config.coin}`);
     var lastPaymentDate = null;
@@ -2102,13 +1889,6 @@ function workerstats_InitTemplate(ranOnce, addressTimeout, xhrAddressPoll, xhrGe
         ranOnce = RunOnce()    
 }
 
-
-/*
-***************************************************************
-workerstats methods
-***************************************************************
-*/
-
 let home_GraphSettings = {
     type: 'line',
     width: '100%',
@@ -2146,7 +1926,6 @@ function home_CreateCharts(data) {
     }
 }
 
-// Get chart data
 function home_GetGraphData(rawData, fixValueToCoins) {
     var graphData = {
         names: [],
@@ -2182,7 +1961,6 @@ function sortElementList(container, siblings,  stats) {
     }
 }
 
-
 function home_InitTemplate(parentStats, siblingStats) {
     $('#networkLastBlockFound').timeago('update', new Date(parentStats.lastblock.timestamp * 1000).toISOString());
 
@@ -2211,13 +1989,10 @@ function home_InitTemplate(parentStats, siblingStats) {
         lastBlockFound = parseInt(parentStats.pool.lastBlockFound);
     }
 
-
     updateText(`networkHashrate${coin}`, getReadableHashRateString(parentStats.network.difficulty / parentStats.config.coinDifficultyTarget) + '/sec');
     updateText(`networkDifficulty${coin}`, formatNumber(parentStats.network.difficulty.toString(), ' '));
     updateText(`blockchainHeight${coin}`, formatNumber(parentStats.network.height.toString(), ' '));
     updateText(`networkLastReward${coin}`, getReadableCoin(parentStats, parentStats.lastblock.reward));
-
-
 
     Object.keys(siblingStats).forEach(key => {
         home_GenerateNetworkStats(key, siblingStats[key].config.symbol)
@@ -2274,10 +2049,8 @@ function home_InitTemplate(parentStats, siblingStats) {
     if (lastHash)
         lastHash.setAttribute('href', getBlockchainUrl(parentStats.lastblock.hash, parentStats));
 
-
     updateText('poolHashrate', `PROP: ${getReadableHashRateString(parentStats.pool.hashrate)}/sec`);
     updateText('poolHashrateSolo', `SOLO: ${getReadableHashRateString(parentStats.pool.hashrateSolo)}/sec`);
-
 
     var hashPowerSolo = parentStats.pool.hashrateSolo / (parentStats.network.difficulty / parentStats.config.coinDifficultyTarget) * 100;
     updateText ('hashPowerSolo', hashPowerSolo.toFixed(2) + '%');
@@ -2285,10 +2058,8 @@ function home_InitTemplate(parentStats, siblingStats) {
     var hashPower = parentStats.pool.hashrate / (parentStats.network.difficulty / parentStats.config.coinDifficultyTarget) * 100;
     updateText('hashPower', hashPower.toFixed(2) + '%');
 
-
     updateText(`poolMiners${coin}`, `${parentStats.pool.miners}/${parentStats.pool.minersSolo}`);
     updateText('blocksTotal', `${parentStats.pool.totalBlocks}/${parentStats.pool.totalBlocksSolo}`);
-
 
     var totalFee = parentStats.config.fee;
     var soloFee = parentStats.config.soloFee;

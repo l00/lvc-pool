@@ -29,7 +29,6 @@ There is no limit on how many workers you can specify. You can also customize yo
 <h4 class="push-up-20" data-tkey="faq1_title">Where are the stats for the pool?  Why hasn't anything changed?</h4>
 <div class="card padding-15 push-down-10" data-tkey="faq1_text">The dashboard lists the coins being mined, reward for each block, current effort on each block for the merged mining.   Sometimes the Pool Blocks section and Worker Statistics needs a refresh by your browser to get updated stats. Typically that is pressing CTRL+F5 to flush the cache and ask your brower for fresh data.</div>
 
-
 <h4 class="push-up-20" data-tkey="faq1_title">What is difficulty?</h4>
 <div class="card padding-15 push-down-10" data-tkey="faq1_text">Difficulty is a measure of how difficult it is to find a hash below a given target. The target difficulty changes from block to block based on the network hashrate attempted by all nodes on a coin network.  However, the difficulty for child coins can be dissimlar to the parent coin you start mining with</div>
 
@@ -54,7 +53,6 @@ Also some other pools might solve the block first, and there is a slim possibili
 <h4 data-tkey="faq6_title">What is an orphan block?</h4>
 <div class="card padding-15 push-down-10" data-tkey="faq6_text">An orphan is a block that didn't meet the requirement as a solution to the block found. Also, there can be a situation where another pool or solo miner found the block solution first, and narrowly won the race. Blocks are confirmed by hash verfication by all the nodes on the coin's network. If there is a consensus of which node(pool,solo) found it first, then that block is added to the block chain permanenty with credit applying to that pool/solo/node.
 A few orphan blocks on child coins can happen when the parent coin's hash work doesn't meet the requirements. </div>
-
 
 <h4 data-tkey="faq6_title">Which payouts scheme is used?</h4>
 <div class="card padding-15 push-down-10" data-tkey="faq6_text">Proportional (Share-based): Every time a block is found, its reward is split between miners according to the number of shares they submitted.</div>
@@ -88,7 +86,6 @@ However, if the coin network has a high hash in total (see Dashboard), the diffi
 <p>For persistent banning, check with the pool operator or Admininstrator to see if there is something else going wrong outside of  your control. Links for Telegram and Discord support are on the left side of the pool web page front end.</p>
 </div>
 
-
 <div id="telegramBot">
     <h4 data-tkey="faq10_title">How to use the Telegram Bot?</h4>
     <div class="card padding-15">
@@ -109,9 +106,7 @@ However, if the coin network has a high hash in total (see Dashboard), the diffi
     </div>
 </div>
 
-<!-- Javascript -->
 <script>
-// Update current page
 currentPage = {
     destroy: function(){},
     update: function(updateKey){

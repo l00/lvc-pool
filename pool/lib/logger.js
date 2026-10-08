@@ -1,34 +1,18 @@
-/**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Log system
- **/
-
-// Load required modules
 let fs = require('fs');
 let util = require('util');
 let dateFormat = require('dateformat');
 let clc = require('cli-color');
 
-/**
- * Initialize log system
- **/
-
-// Set CLI colors
 let severityMap = {
 	'info': clc.blue,
 	'warn': clc.yellow,
 	'error': clc.red
 };
 
-// Set severity levels
 let severityLevels = ['info', 'warn', 'error'];
 
-// Set log directory
 let logDir = config.logging.files.directory;
 
-// Create log directory if not exists
 if (!fs.existsSync(logDir)) {
 	try {
 		fs.mkdirSync(logDir);
@@ -37,9 +21,6 @@ if (!fs.existsSync(logDir)) {
 	}
 }
 
-/**
- * Write log entries to file at specified flush interval
- **/
 let pendingWrites = {};
 
 setInterval(function () {
@@ -55,9 +36,6 @@ setInterval(function () {
 	}
 }, config.logging.files.flushInterval * 1000);
 
-/**
- * Add new log entry
- **/
 global.log = function (severity, system, text, data) {
 
 	let logConsole = severityLevels.indexOf(severity) >= severityLevels.indexOf(config.logging.console.level);
@@ -83,7 +61,6 @@ global.log = function (severity, system, text, data) {
 		} else
 			console.log(time + ' [' + system + '] ' + formattedMessage);
 	}
-
 
 	if (logFiles) {
 		let fileName = logDir + '/' + system + '_' + severity + '.log';

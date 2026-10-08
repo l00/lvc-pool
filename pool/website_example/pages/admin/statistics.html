@@ -6,7 +6,6 @@
 <script id="siblingTemplate" type="text/x-handlebars-template">
     <div id="poolStats{{coin}}" class="row">
 
-        <!-- Total Mined -->
         <div class="col-lg-3 col-sm-4">
             <div class="infoBox hoverExpandEffect mergedBg">
                 <div class="icon">
@@ -19,7 +18,6 @@
             </div>
         </div>
 
-        <!-- Total Paid -->
         <div class="col-lg-3 col-sm-4">
             <div class="infoBox hoverExpandEffect mergedBg">
                 <div class="icon">
@@ -32,7 +30,6 @@
             </div>
         </div>
 
-        <!-- Total Owed -->
         <div class="col-lg-3 col-sm-4">
             <div class="infoBox hoverExpandEffect mergedBg">
                 <div class="icon">
@@ -45,7 +42,6 @@
             </div>
         </div>
 
-        <!-- Profit (before tx fees) -->
         <div class="col-lg-3 col-sm-4">
             <div class="infoBox hoverExpandEffect mergedBg">
                 <div class="icon">
@@ -58,7 +54,6 @@
             </div>
         </div>
 
-        <!-- Registered Addresses -->
         <div class="col-lg-3 col-sm-4">
             <div class="infoBox hoverExpandEffect mergedBg">
                 <div class="icon">
@@ -71,7 +66,6 @@
             </div>
         </div>
 
-        <!-- Blocks Unlocked -->
         <div class="col-lg-3 col-sm-4">
             <div class="infoBox hoverExpandEffect mergedBg">
                 <div class="icon">
@@ -84,7 +78,6 @@
             </div>
         </div>
 
-        <!-- Blocks Orphaned -->
         <div class="col-lg-3 col-sm-4">
             <div class="infoBox hoverExpandEffect mergedBg">
                 <div class="icon">
@@ -97,7 +90,6 @@
             </div>
         </div>
 
-        <!-- Average Luck (shares/diff) -->
         <div class="col-lg-3 col-sm-4">
             <div class="infoBox hoverExpandEffect mergedBg">
                 <div class="icon">
@@ -112,19 +104,14 @@
     </div>
 </script>
 
-<!-- Javascript -->
 <script>
 function formatLuck(difficulty, shares, stats) {
-    // Only an approximation to reverse the calculations done in pool.js, because the shares with their respective times are not recorded in redis
-    // Approximation assumes equal pool hashrate for the whole round
-    // Could potentially be replaced by storing the sum of all job.difficulty in the redis db.
     if (stats.config.slushMiningEnabled) {
-        // Uses integral calculus to calculate the average of a dynamic function
-        var accurateShares = 1 / stats.config.blockTime * (  // 1/blockTime to get the average
-            shares * stats.config.weight * (                  // Basically calculates the 'area below the graph' between 0 and blockTime
+        var accurateShares = 1 / stats.config.blockTime * (
+            shares * stats.config.weight * (
                 1 - Math.pow(
                     Math.E,
-                    ((- stats.config.blockTime) / stats.config.weight)  // blockTime is equal to the highest possible result of (dateNowSeconds - scoreTime)
+                    ((- stats.config.blockTime) / stats.config.weight)
                 )
             )
         );
@@ -197,8 +184,6 @@ $(function() {
         $('#tab-content').append(rendered)
         getStats(null, mergedApis[key].api, mergedStats[key]); 
     })
-
-
 
 });
 </script>

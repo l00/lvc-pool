@@ -11,7 +11,6 @@
     <li id="blockTabs{{coin}} role="presentation" class="{{active}}"><a href="#{{coin}}">{{coin}} {{symbol}}</a></li>
 </script>
 
-<!-- Market -->
 <script id="siblingMarketTemplate" type="text/x-handlebars-template">
     <div role="tabpanel" class="tab-pane {{active}}" id="{{coin}}">
         <div id="marketStats{{coin}}" class="row">
@@ -40,7 +39,6 @@
 </script>
 
 <script id="siblingCalculatorTemplate" type="text/x-handlebars-template">    
-    <!-- Mining Profit Calculator -->
     <div id="miningProfitCalc{{coin}}">
         <h3><span data-tkey="estimateProfit">Estimate Mining Profits</span></h3>
         <div id="calcHashHolder">
@@ -67,9 +65,7 @@
 </script>
 
 
-<!-- Javascript -->
 <script>
-// Market settings
 let priceSource = 'cryptonator';
 let priceCurrency = 'USD';
 
@@ -77,7 +73,6 @@ if (typeof cryptonatorWidget !== 'undefined' && typeof marketCurrencies === 'und
     let marketCurrencies = cryptonatorWidget;
 }
 
-// Charts initialized
 let chartsInitialized = {}
 let loadedData = {}
 let intervalChartsUpdate = {}
@@ -85,7 +80,6 @@ let ranOnce = false
 let xhrMarketGets = {}
 let marketPrices = {}
 let currencyPairs = {}
-// Update current page
 currentPage = {
     destroy: function(){
         if (chartsInitialized) {
@@ -112,11 +106,7 @@ currentPage = {
 
 function RunOnce() {
 
-    /**
-     * Hash Profitability Calculator
-     **/
      
-    // Automatically update profit calculation on key press
     $('#calcHashRate')
         .keyup((e) => {
                 market_CalcEstimateProfit(marketPrices)
@@ -126,7 +116,6 @@ function RunOnce() {
         })
 
 
-    // Click on button
     $('#calcHashUnits > li > a').click(function(e){
         e.preventDefault();
         $('#calcHashUnit').text($(this).text()).data('mul', $(this).data('mul'));
@@ -140,7 +129,6 @@ function RunOnce() {
     return true
 }
 
-// Handle tooltip
 $(function() {
     $('[data-toggle="tooltip"]').tooltip();
 });

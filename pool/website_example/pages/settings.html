@@ -10,7 +10,6 @@
 
 <script id="siblingTemplate" type="text/x-handlebars-template">
     <div role="tabpanel" class="tab-pane {{active}}" id="{{coin}}">
-                <!-- Verification fields -->
         <h3><span data-tkey="verificationFields">Verification fields</span></h3>
 
         <div class="card padding-15 padding-b-10">
@@ -32,7 +31,6 @@
             </div>
         </div>
 
-        <!-- Minimum payout level -->
         <h3><span data-tkey="setMinimumPayout">Set your minimal payout level</span></h3>
         <div class="card padding-15 padding-b-10">
             <p><span data-tkey="minerMinPayout">If you prefer a higher payout level than the pool's default then this is where you can change it for your miners. The amount you indicate here will become the minimum amount for pool payments to your address.</span></p>
@@ -54,7 +52,6 @@
 <script>
 
 let ranOnce = false
-// Update current page
 currentPage = {
     destroy: function(){
         Object.keys(mergedApis).forEach(key => {

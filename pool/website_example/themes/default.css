@@ -90,7 +90,6 @@ code {
 .push-down-25 { margin-bottom: 25px !important; }
 .push-down-30 { margin-bottom: 30px !important; }
 
-/* Footer */
 footer{
   position: fixed;
   bottom: 0;
@@ -109,7 +108,6 @@ footer > div{
   text-align: center;
 }
 
-/* Wrappers */
 #wrapper {
   width: 100%;
 }
@@ -128,7 +126,6 @@ footer > div{
   font-size: 2em;
 }
 
-/* Sidebar */
 .nav-side-menu {
   overflow: auto;
   font-size: 16px;
@@ -280,7 +277,6 @@ footer > div{
   }
 }
 
-/* Top Bar */
 #top-bar { 
   background-color: #0274a8;
   line-height: 50px;
@@ -321,7 +317,6 @@ footer > div{
   }
 }
 
-/* Bootstrap Buttons */
 .btn-default {
   color: #ffffff;
   background-color: #014e71;
@@ -362,12 +357,10 @@ footer > div{
   background-color: #ffffff;
 }
 
-/* Bootstrap Form Controls */
 .input-group-addon {
   color: #014e71;
 }
 
-/* Bootstrap Tables */
 .table > thead > tr > td.success, 
 .table > tbody > tr > td.success,
 .table > tfoot > tr > td.success,
@@ -409,13 +402,11 @@ table th.sort:hover{
   cursor: pointer;
 }
 
-/* jQuery sparkline tooltip */
 .jqstooltip {
   border: none !important;
   background: rgba(0, 0, 0, 0.8) !important;
   border-radius: 2px !important;
   margin-top: -20px !important;
-  /* Override Bootstrap defaults to fix jQuery.Sparkline tooltips appearance */
   -webkit-box-sizing: content-box !important;
   -moz-box-sizing: content-box;
   box-sizing: content-box !important;
@@ -428,7 +419,6 @@ table th.sort:hover{
   color: #fff;
 }
 
-/* Content Card */
 .card {
   display: inline-block;
   position: relative;
@@ -445,7 +435,6 @@ table th.sort:hover{
   margin-bottom: 0;
 }
 
-/* Info box */
 .infoBox {
   background-color: #03a9f4;
   box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.14);
@@ -505,8 +494,6 @@ table th.sort:hover{
   color: #fff;
 }
 
-
-/* Hash info box */
 .hashInfo {
   background-color: #014e71;
   box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.14);
@@ -514,12 +501,6 @@ table th.sort:hover{
   padding: 15px;
   border-radius: 3px;
   color: #fff;
-/*  margin-bottom: 30px;
-}
-@media (max-width: 767px){
-  .hashInfo {
-    margin-bottom: 15px;
-  } */
 }
 .hashInfo .text {
   font-size: 13px;
@@ -546,7 +527,6 @@ table th.sort:hover{
   font-weight: normal;
 }
 
-/* Slush payment info box */
 .slushInfo {
   background-color: #014e71;
   box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.14);
@@ -577,7 +557,6 @@ table th.sort:hover{
     color: #fff;
 }
 
-/* Pool Statistics */
 .stats > div:not(#addressError) {
   color: #262626; 
   padding: 10px 0px;
@@ -597,7 +576,6 @@ table th.sort:hover{
   color: #0274a8;
 }
 
-/* Pool and Worker Charts */
 .poolChart, .marketChart, .userChart {
   display: none;
 }
@@ -619,13 +597,12 @@ table th.sort:hover{
   font-size: 21px;
 }
 .chart a.chart-style {
-  display: none; /* never displayed; we just use it to store the following colors: */
+  display: none;
   background-color: rgba(3, 169, 244, .4);
   border-color: #03a9f4;
-  width: 1px; /* controls the chart border width (must be specified in px) */
+  width: 1px;
 }
 
-/* Market Rates */
 #marketStats  {
   margin-top: 20px;
 }
@@ -633,7 +610,6 @@ table th.sort:hover{
     display: none;
 }
 
-/* Mining Profit Calculator */
 #miningProfitCalc{
   margin: 35px 0;
 }
@@ -685,7 +661,6 @@ table th.sort:hover{
   }    
 }
 
-/* Mining Ports */
 #miningPorts tr > td {
   vertical-align: middle;
   font-size: 0.95em;
@@ -707,7 +682,6 @@ table th.sort:hover{
   }  
 }
 
-/* Mining Apps */
 #miningApps .table > thead > tr > th {
   white-space: nowrap;
 }
@@ -740,7 +714,6 @@ table th.sort:hover{
   font-style: italic;
 }
 
-/* Worker Statistics */
 #yourStatsInput {
   z-index: inherit;
   font-family: 'Inconsolata', monospace;
@@ -839,7 +812,6 @@ table th.sort:hover{
   }
 }
 
-/* Pool Blocks */
 #blocksStats  {
   margin-top: 20px;
 }
@@ -918,7 +890,6 @@ table th.sort:hover{
   color: #df9d00;
 }
 
-/* Payments */
 #paymentsStats  {
   margin-top: 20px;
 }
@@ -964,7 +935,6 @@ table th.sort:hover{
   }
 }
 
-/* Top 10 miners */
 #top10miners td {
   vertical-align: middle;
 }
@@ -992,7 +962,6 @@ table th.sort:hover{
   }
 }
 
-/* Language selector */
 #langSelector {
   float: right;
   padding-right: 0 !important;

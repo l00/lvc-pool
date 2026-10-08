@@ -15,7 +15,3 @@ var transactionExplorer = "http://chainradar.com/{symbol}/transaction/{id}";
 var themeCss = "themes/default.css";
 var defaultLang = "en";
 
-// Merged Mining:
-// var api = "http://poolhost/apiMerged";
-// var blockchainExplorer = "http://explorer.ird.cash/?hash={id}#block";
-// var transactionExplorer = "http://explorer.ird.cash/?hash={id}#transaction";

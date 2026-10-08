@@ -1,31 +1,15 @@
-/**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Charts data functions
- **/
-
-// Load required modules
 let fs = require('fs');
 let async = require('async');
 let http = require('http');
 
-
 let apiInterfaces = require('./apiInterfaces.js')(config.daemon, config.wallet, config.api);
 let market = require('./market.js');
 
-// Set charts cleanup interval
 let cleanupInterval = config.redis.cleanupInterval && config.redis.cleanupInterval > 0 ? config.redis.cleanupInterval : 15;
 
-// Initialize log system
 let logSystem = 'charts';
 require('./exceptionWriter.js')(logSystem);
 
-/**
- * Charts data collectors (used by chartsDataCollector.js)
- **/
-
-// Start data collectors
 function startDataCollectors () {
 	async.each(Object.keys(config.charts.pool), function (chartName) {
 		let settings = config.charts.pool[chartName];
@@ -51,8 +35,6 @@ function startDataCollectors () {
 	}
 }
 
-
-// Chart data functions
 let chartStatFuncs = {
 	hashrate: getPoolHashrate,
 	miners: getPoolMiners,
@@ -62,7 +44,6 @@ let chartStatFuncs = {
 	profit: getCoinProfit
 };
 
-// Statistic value handler
 let statValueHandler = {
 	avg: function (set, value) {
 		set[1] = (set[1] * set[2] + value) / (set[2] + 1);
@@ -78,7 +59,6 @@ let statValueHandler = {
 	}
 };
 
-// Presave functions
 let preSaveFunctions = {
 	hashrate: statValueHandler.avgRound,
 	hashrateSolo: statValueHandler.avgRound,
@@ -89,7 +69,6 @@ let preSaveFunctions = {
 	profit: statValueHandler.avg
 };
 
-// Store collected values in redis database
 function storeCollectedValues (chartName, values, settings) {
 	for (let i in values) {
 		if (values[i]) {
@@ -98,7 +77,6 @@ function storeCollectedValues (chartName, values, settings) {
 	}
 }
 
-// Store collected value in redis database
 function storeCollectedValue (chartName, values, settings) {
 	if (!values) { return false; }
 
@@ -106,11 +84,11 @@ function storeCollectedValue (chartName, values, settings) {
 	values.forEach((value, index) => {
 		let name = `${chartName}` + (index === 0 ? '' : 'Solo')
 		return getChartDataFromRedis(name, function (sets) {
-			let lastSet = sets[sets.length - 1]; // [time, avgValue, updatesCount]
+			let lastSet = sets[sets.length - 1];
 			if (!lastSet || now - lastSet[0] > settings.stepInterval) {
 				lastSet = [now, value, 1];
 				sets.push(lastSet);
-				while (now - sets[0][0] > settings.maximumPeriod) { // clear old sets
+				while (now - sets[0][0] > settings.maximumPeriod) {
 					sets.shift();
 				}
 			} else {
@@ -134,7 +112,6 @@ function storeCollectedValue (chartName, values, settings) {
 	})
 }
 
-// Collect pool statistics with an interval
 function collectPoolStatWithInterval (chartName, settings) {
 	async.waterfall([
 		chartStatFuncs[chartName],
@@ -144,25 +121,16 @@ function collectPoolStatWithInterval (chartName, settings) {
 	]);
 }
 
-/**
- * Get chart data from redis database
- **/
 function getChartDataFromRedis (chartName, callback) {
 	redisClient.get(getStatsRedisKey(chartName), function (error, data) {
 		callback(data ? JSON.parse(data) : []);
 	});
 }
 
-/**
- * Return redis key for chart data
- **/
 function getStatsRedisKey (chartName) {
 	return config.coin + ':charts:' + chartName;
 }
 
-/**
- * Get pool statistics from API
- **/
 function getPoolStats (callback) {
 	apiInterfaces.pool('/stats', function (error, data) {
 		if (error) {
@@ -172,45 +140,30 @@ function getPoolStats (callback) {
 	});
 }
 
-/**
- * Get pool hashrate from API
- **/
 function getPoolHashrate (callback) {
 	getPoolStats(function (error, stats) {
 		callback(error, stats.pool ? [Math.round(stats.pool.hashrate), Math.round(stats.pool.hashrateSolo)] : null);
 	});
 }
 
-/**
- * Get pool miners from API
- **/
 function getPoolMiners (callback) {
 	getPoolStats(function (error, stats) {
 		callback(error, stats.pool ? [stats.pool.miners, stats.pool.minersSolo] : null);
 	});
 }
 
-/**
- * Get pool workers from API
- **/
 function getPoolWorkers (callback) {
 	getPoolStats(function (error, stats) {
 		callback(error, stats.pool ? [stats.pool.workers, stats.pool.workersSolo] : null);
 	});
 }
 
-/**
- * Get network difficulty from API
- **/
 function getNetworkDifficulty (callback) {
 	getPoolStats(function (error, stats) {
 		callback(error, stats.pool ? [stats.network.difficulty] : null);
 	});
 }
 
-/**
- * Get users hashrate from API
- **/
 function getUsersHashrates (callback) {
 	apiInterfaces.pool('/miners_hashrate', function (error, data) {
 		if (error) {
@@ -221,9 +174,6 @@ function getUsersHashrates (callback) {
 	});
 }
 
-/**
- * Get workers' hashrates from API
- **/
 function getWorkersHashrates (callback) {
 	apiInterfaces.pool('/workers_hashrate', function (error, data) {
 		if (error) {
@@ -234,9 +184,6 @@ function getWorkersHashrates (callback) {
 	});
 }
 
-/**
- * Collect users hashrate from API
- **/
 function collectUsersHashrate (chartName, settings) {
 	let redisBaseKey = getStatsRedisKey(chartName) + ':';
 	redisClient.keys(redisBaseKey + '*', function (keys) {
@@ -253,16 +200,10 @@ function collectUsersHashrate (chartName, settings) {
 	});
 }
 
-/**
- * Get user hashrate chart data
- **/
 function getUserHashrateChartData (address, callback) {
 	getChartDataFromRedis('hashrate:' + address, callback);
 }
 
-/**
- * Collect worker hashrates from API
- **/
 function collectWorkersHashrate (chartName, settings) {
 	let redisBaseKey = getStatsRedisKey(chartName) + ':';
 	redisClient.keys(redisBaseKey + '*', function (keys) {
@@ -279,9 +220,6 @@ function collectWorkersHashrate (chartName, settings) {
 	});
 }
 
-/**
- * Convert payments data to chart
- **/
 function convertPaymentsDataToChart (paymentsData) {
 	let data = [];
 	if (paymentsData && paymentsData.length) {
@@ -292,9 +230,6 @@ function convertPaymentsDataToChart (paymentsData) {
 	return data;
 }
 
-/**
- * Get current coin market price
- **/
 function getCoinPrice (callback) {
 	let source = config.prices.source;
 	let currency = config.prices.currency;
@@ -307,9 +242,6 @@ function getCoinPrice (callback) {
 	});
 }
 
-/**
- * Get current coin profitability
- **/
 function getCoinProfit (callback) {
 	getCoinPrice(function (error, price) {
 		if (error) {
@@ -326,9 +258,6 @@ function getCoinProfit (callback) {
 	});
 }
 
-/**
- * Return pool charts data
- **/
 function getPoolChartsData (callback) {
 	let chartsNames = [];
 	let redisKeys = [];
@@ -361,9 +290,6 @@ function getPoolChartsData (callback) {
 	}
 }
 
-/**
- * Return user charts data
- **/
 function getUserChartsData (address, paymentsData, callback) {
 	let stats = {};
 	let chartsFuncs = {
@@ -385,10 +311,6 @@ function getUserChartsData (address, paymentsData, callback) {
 	async.parallel(chartsFuncs, callback);
 }
 
-
-/**
- * Exports charts functions
- **/
 module.exports = {
 	startDataCollectors: startDataCollectors,
 	getUserChartsData: getUserChartsData,

@@ -1,11 +1,3 @@
-/**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Payments processor
- **/
-
-// Load required modules
 let fs = require('fs');
 let async = require('async');
 
@@ -13,13 +5,8 @@ let apiInterfaces = require('./apiInterfaces.js')(config.daemon, config.wallet, 
 let notifications = require('./notifications.js');
 let utils = require('./utils.js');
 
-// Initialize log system
 let logSystem = 'payments';
 require('./exceptionWriter.js')(logSystem);
-
-/**
- * Run payments processor
- **/
 
 log('info', logSystem, 'Started');
 
@@ -30,7 +17,6 @@ if (!config.payments.priority) config.payments.priority = 0;
 function runInterval () {
 	async.waterfall([
 
-		// Get worker keys
 		function (callback) {
 			redisClient.keys(config.coin + ':workers:*', function (error, result) {
 				if (error) {
@@ -42,7 +28,6 @@ function runInterval () {
 			});
 		},
 
-		// Get worker balances
 		function (keys, callback) {
 			let redisCommands = keys.map(function (k) {
 				return ['hget', k, 'balance'];
@@ -66,7 +51,6 @@ function runInterval () {
 				});
 		},
 
-		// Get worker minimum payout
 		function (keys, balances, callback) {
 			let redisCommands = keys.map(function (k) {
 				return ['hget', k, 'minPayoutLevel'];
@@ -101,7 +85,6 @@ function runInterval () {
 				});
 		},
 
-		// Filter workers under balance threshold for payment
 		function (balances, minPayoutLevel, callback) {
 			let payments = {};
 

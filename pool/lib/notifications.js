@@ -1,25 +1,12 @@
-/**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Notifications system
- * Supports: email, telegram
- *
- * Author: Daniel Vandal
- **/
-
-// Load required modules
 let fs = require('fs');
 
 let emailSystem = require('./email.js');
 let telegram = require('./telegram.js');
 let utils = require('./utils.js');
 
-// Initialize log system
 let logSystem = 'notifications';
 require('./exceptionWriter.js')(logSystem);
 
-// Load notification settings
 let notificationSettings = {
 	emailTemplate: "email/template.txt",
 	emailSubject: {
@@ -57,46 +44,29 @@ if (config.notifications) {
 	Object.assign(notificationSettings, config.notifications);
 }
 
-// Test notification message
 notificationSettings.emailSubject['test'] = "Test notification";
 notificationSettings.emailMessage['test'] = "This is a test notification from the pool.";
 notificationSettings.telegramMessage['test'] = "This is a test notification from the pool.";
 
-/**
- * Send global notification
- **/
 exports.sendToAll = function (id, variables) {
-	// Send telegram to channel
 	sendToTelegramChannel(id, variables);
 
-	// Send blocks notifications to telegram
 	if (id === "blockFound" || id === "blockUnlocked" || id === "blockOrphaned") {
 		sendBlockTelegram(id, variables);
 	}
 
-	// Send to all pool email addresses
 	sendToAllEmails(id, variables);
 }
 
-/**
- * Send miner notification
- **/
 exports.sendToMiner = function (miner, id, variables) {
-	// Send telegram
 	sendToMinerTelegram(miner, id, variables);
 
-	// Send email
 	sendToMinerEmail(miner, id, variables);
 }
 
-/**
- * Send telegram channel notification
- **/
 function sendToTelegramChannel (id, variables) {
-	// Set custom variables
 	variables = setCustomVariables(variables);
 
-	// Send notification
 	if (config.telegram && config.telegram.enabled) {
 		let message = getTelegramMessage(id, variables);
 		if (!message || message === '') {
@@ -116,14 +86,9 @@ function sendToTelegramChannel (id, variables) {
 }
 exports.sendToTelegramChannel = sendToTelegramChannel;
 
-/**
- * Send telegram to miner in private message
- **/
 function sendToMinerTelegram (miner, id, variables) {
-	// Set custom variables
 	variables = setCustomVariables(variables);
 
-	// Send telegram
 	if (config.telegram && config.telegram.enabled) {
 		let message = getTelegramMessage(id, variables);
 		if (!message || message === '') {
@@ -139,14 +104,9 @@ function sendToMinerTelegram (miner, id, variables) {
 }
 exports.sendToMinerTelegram = sendToMinerTelegram;
 
-/**
- * Send block notification telegram to miner in private message
- **/
 function sendBlockTelegram (id, variables) {
-	// Set custom variables
 	variables = setCustomVariables(variables);
 
-	// Send telegram
 	if (config.telegram && config.telegram.enabled) {
 		let message = getTelegramMessage(id, variables);
 		if (!message || message === '') {
@@ -165,14 +125,9 @@ function sendBlockTelegram (id, variables) {
 }
 exports.sendBlockTelegram = sendBlockTelegram;
 
-/**
- * Send email notification to all pool email addresses
- **/
 function sendToAllEmails (id, variables) {
-	// Set custom variables
 	variables = setCustomVariables(variables);
 
-	// Send email
 	if (config.email && config.email.enabled) {
 		let subject = getEmailSubject(id, variables);
 		let content = getEmailContent(id, variables);
@@ -192,14 +147,9 @@ function sendToAllEmails (id, variables) {
 }
 exports.sendToAllEmails = sendToAllEmails;
 
-/**
- * Send email notification to miner email address
- **/
 function sendToMinerEmail (miner, id, variables) {
-	// Set custom variables
 	variables = setCustomVariables(variables);
 
-	// Send email
 	if (config.email && config.email.enabled) {
 		let subject = getEmailSubject(id, variables);
 		let content = getEmailContent(id, variables);
@@ -216,14 +166,9 @@ function sendToMinerEmail (miner, id, variables) {
 }
 exports.sendToMinerEmail = sendToMinerEmail;
 
-/**
- * Send email notification to a specific email address
- **/
 function sendToEmail (email, id, variables) {
-	// Set custom variables
 	variables = setCustomVariables(variables);
 
-	// Send notification
 	if (config.email && config.email.enabled) {
 		let subject = getEmailSubject(id, variables);
 		let content = getEmailContent(id, variables);
@@ -237,17 +182,11 @@ function sendToEmail (email, id, variables) {
 }
 exports.sendToEmail = sendToEmail;
 
-/**
- * Email functions
- **/
-
-// Get email subject
 function getEmailSubject (id, variables) {
 	let subject = replaceVariables(notificationSettings.emailSubject[id], variables) || '';
 	return subject;
 }
 
-// Get email content
 function getEmailContent (id, variables) {
 	let message = notificationSettings.emailMessage[id] || '';
 	if (!message || message === '') return '';
@@ -264,11 +203,6 @@ function getEmailContent (id, variables) {
 	return content;
 }
 
-/**
- * Telegram functions
- **/
-
-// Get telegram message
 function getTelegramMessage (id, variables) {
 	let telegramVars = {};
 	if (telegramVars) {
@@ -283,11 +217,6 @@ function getTelegramMessage (id, variables) {
 	return message;
 }
 
-/**
- * Handle variables in texts
- **/
-
-// Set custom variables
 function setCustomVariables (variables) {
 	if (!variables) variables = {};
 	variables['TIME'] = utils.dateFormat(Date.now(), 'yyyy-mm-dd HH:MM:ss Z');
@@ -295,7 +224,6 @@ function setCustomVariables (variables) {
 	return variables;
 }
 
-// Replace variables in a string
 function replaceVariables (string, variables) {
 	if (!string) return '';
 	if (variables) {

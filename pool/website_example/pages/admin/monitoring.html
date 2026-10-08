@@ -1,7 +1,6 @@
 <ul class="nav nav-tabs" id="coinTabs">
 </ul>
 
-<!-- Tab panes -->
 <div class="tab-content" id="tab-content">
 </div>
 
@@ -9,7 +8,6 @@
     <li id="coinTabs{{coin}}" role="presentation" class="{{active}}"><a href="#{{coin}}" data-coin="{{coin}}">{{coin}} {{symbol}}</a></li>
 </script>
 
-<!-- Handlebars template -->
 <script id="monitoringInfo" type="text/x-handlebars-template">
     <div role="tabpanel" class="tab-pane {{active}}" id="{{coin}}">
         <div class="row">
@@ -81,7 +79,6 @@
     </div>
 </script>
 
-<!-- Javascript -->
 <script>
 function getCheckTime(timestamp) {
     return timestamp ? $.timeago(new Date(timestamp * 1000).toISOString()) : null;
@@ -122,7 +119,6 @@ function monitoringInfoParse(endPoint, key, data) {
 }
 
 function renderLogInfo(endPoint, key, active,  password) {
-
 
     if(!password) {
         password = prompt('Enter admin password');

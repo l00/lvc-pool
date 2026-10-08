@@ -1,11 +1,3 @@
-/**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Utilities functions
- **/
-
-// Load required module
 let crypto = require('crypto');
 
 let dateFormat = require('dateformat');
@@ -14,23 +6,15 @@ exports.dateFormat = dateFormat;
 let cnUtil = require('cryptoforknote-util');
 exports.cnUtil = cnUtil;
 
-/**
- * Generate random instance id
- **/
 exports.instanceId = function () {
 	return crypto.randomBytes(4);
 }
 
-/**
- * Validate miner address
- **/
 var addressBase58Prefix = config.poolServer.pubAddressPrefix ? parseInt(config.poolServer.pubAddressPrefix) : parseInt(cnUtil.address_decode(Buffer.from(config.poolServer.poolAddress)).toString());
-// intAddressPrefix: false disables integrated addresses (coins without them, e.g. Levcoin),
-// so the wallet never gets a payout destination it cannot parse.
+// intAddressPrefix: false disables integrated addresses; levcoin has none and its wallet rejects them
 let integratedAddressBase58Prefix = config.poolServer.intAddressPrefix === false ? null : config.poolServer.intAddressPrefix ? parseInt(config.poolServer.intAddressPrefix) : addressBase58Prefix + 1;
 let subAddressBase58Prefix = config.poolServer.subAddressPrefix ? parseInt(config.poolServer.subAddressPrefix) : "N/A";
 
-// Get address prefix
 function getAddressPrefix (address) {
 	let addressBuffer = Buffer.from(address);
 
@@ -46,7 +30,6 @@ function getAddressPrefix (address) {
 }
 exports.getAddressPrefix = getAddressPrefix;
 
-// Validate miner address
 exports.validateMinerAddress = function (address) {
 	let addressPrefix = getAddressPrefix(address);
 	if (addressPrefix === addressBase58Prefix) return true;
@@ -62,7 +45,6 @@ function characterCount (string, char) {
 }
 exports.characterCount = characterCount;
 
-// Validate miner address
 exports.validateChildMinerAddress = (address, index) => {
 	let childAddressBase58Prefix = parseInt(cnUtil.address_decode(Buffer.from(config.childPools[index].poolAddress)).toString());
 	let childIntegratedAddressBase58Prefix = config.poolServer.intChildAddressPrefix ? parseInt(config.childPools[index].intAddressPrefix) : childAddressBase58Prefix + 1;
@@ -73,7 +55,6 @@ exports.validateChildMinerAddress = (address, index) => {
 	return false;
 }
 
-// Return if value is an integrated address
 exports.isIntegratedAddress = function (address) {
 	let addressPrefix = getAddressPrefix(address);
 	return (integratedAddressBase58Prefix !== null && addressPrefix === integratedAddressBase58Prefix);
@@ -97,9 +78,6 @@ exports.determineRewardData = (value) => {
 	return calculatedData
 }
 
-/**
- * Cleanup special characters (fix for non latin characters)
- **/
 function cleanupSpecialChars (str) {
 	str = str.replace(/[ÀÁÂÃÄÅ]/g, "A");
 	str = str.replace(/[àáâãäå]/g, "a");
@@ -115,9 +93,6 @@ function cleanupSpecialChars (str) {
 }
 exports.cleanupSpecialChars = cleanupSpecialChars;
 
-/**
- * Get readable hashrate
- **/
 exports.getReadableHashRate = function (hashrate) {
 	let i = 0;
 	let byteUnits = [' H', ' KH', ' MH', ' GH', ' TH', ' PH'];
@@ -128,18 +103,12 @@ exports.getReadableHashRate = function (hashrate) {
 	return hashrate.toFixed(2) + byteUnits[i] + '/sec';
 }
 
-/**
- * Get readable coins
- **/
 exports.getReadableCoins = function (coins, digits, withoutSymbol) {
 	let coinDecimalPlaces = config.coinDecimalPlaces || config.coinUnits.toString().length - 1;
 	let amount = (parseInt(coins || 0) / config.coinUnits).toFixed(digits || coinDecimalPlaces);
 	return amount + (withoutSymbol ? '' : (' ' + config.symbol));
 }
 
-/**
- * Generate unique id
- **/
 exports.uid = function () {
 	let min = 100000000000000;
 	let max = 999999999999999;
@@ -147,9 +116,6 @@ exports.uid = function () {
 	return id.toString();
 };
 
-/**
- * Ring buffer
- **/
 exports.ringBuffer = function (maxSize) {
 	let data = [];
 	let cursor = 0;

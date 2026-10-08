@@ -1,4 +1,3 @@
-<!-- Connection Details -->
 <div class="row">
     <div class="col-sm-6">
         <h3><span data-tkey="connectionDetails">Connection Details</span></h3>
@@ -29,7 +28,6 @@
         </div>
     </div>
 
-    <!-- Mining ports -->
     <div class="col-sm-6">
         <h3><span data-tkey="miningPorts">Mining Ports</span></h3>
         <div class="card">
@@ -56,10 +54,8 @@
     
 </div>
 
-<!-- Mining Applications and Configuration Generator -->
 <h3><span data-tkey="miningApps">Mining Applications</span></h3>
 
-<!-- Configuration Generator -->
 <div class="card padding-15">
     <p><span data-tkey="configGeneratorDesc">Generate your custom configuration to mine on our pool</span></p>
     <div id="configGenerator" class="row">
@@ -118,7 +114,6 @@
     </div>
 </div>
 
-<!-- Mining Applications -->
 <div class="card push-up-5">
     <div id="miningApps" class="table-responsive">
         <table class="table">
@@ -133,7 +128,6 @@
             </thead>
             <tbody id="miningApps_rows">
 	    
-	    <!-- XMR Stak -->
             <tr class="appInfo">
                 <td class="miningAppTitle">XMR Stak</td>
                 <td>CPU & GPU (AMD/NVIDIA)</td>
@@ -163,7 +157,6 @@
                 </td>
             </tr>
 	    
-	    <!-- XMRig -->
             <tr class="appInfo">
                 <td class="miningAppTitle">XMRig</td>
                 <td>CPU</td>
@@ -191,7 +184,6 @@
                 </td>
             </tr>
 
-	    <!-- XMRig-AMD -->
             <tr class="appInfo">
                 <td class="miningAppTitle">XMRig-AMD</td>
                 <td>OpenCL (AMD)</td>
@@ -219,7 +211,6 @@
                 </td>
             </tr>
 
-	    <!-- XMRig-NVIDIA -->
             <tr class="appInfo">
                 <td class="miningAppTitle">XMRig-NVIDIA</td>
                 <td>Cuda (Nvidia)</td>
@@ -247,7 +238,6 @@
                 </td>
             </tr>
 
-	    <!-- XMRigCC -->
             <tr class="appInfo">
                 <td class="miningAppTitle">XMRigCC</td>
                 <td>CPU</td>
@@ -278,9 +268,7 @@
     </div>
 </div>
 
-<!-- Javascript -->
 <script>
-// Cleanup mining ports
 var lastPortsJson = '';
 var $miningPorts = $('#miningPorts_rows');
 var miningPortTemplate = $miningPorts.html();
@@ -289,7 +277,6 @@ $miningPorts.empty();
 var $miningPortSelect = $('#gMiningPort');
 $miningPortSelect.empty();
 
-// Update current page
 currentPage = {
     destroy: function(){
     },
@@ -435,16 +422,10 @@ currentPage = {
     }
 };
 
-/**
- * Configuration generator
- **/
-
 $('#generateConf').click(function() {
-    // Mining Port
     var port = $('#gMiningPort').val();
     updateTextClasses('examplePort', port);
 
-    // Username
     var address = $('#gAddress').val().replace(/\s+/g, '').trim();
     var childAddress = $('#gChildAddress').val().replace(/\s+/g, '').trim();
     var solo = $('#gSolo').val();
@@ -459,7 +440,6 @@ $('#generateConf').click(function() {
     if ($('input[name=solo]').is(':checked')) login = `solo:${login}`
     updateTextClasses('exampleLogin', login);
 
-    // Password
     var childLogin = childAddress ? childAddress : 'YOUR_CHILD_WALLET_ADDRESS';
     if (childPaymentID) childLogin = childLogin + lastStats.config.paymentIdSeparator + childPaymentID;
     if (difficulty) childLogin = childLogin + lastStats.config.fixedDiffSeparator + difficulty;

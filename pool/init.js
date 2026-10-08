@@ -1,36 +1,26 @@
- /**
-  * Cryptonite Node.JS Pool
-  * https://github.com/dvandal/cryptonote-nodejs-pool
-  *
-  * Pool initialization script
-  **/
-
- // Load needed modules
+/**
+ * Entry point. Reads the config and forks the enabled modules: pool workers, block unlocker,
+ * payment processor, API and chart collector.
+ */
  var fs = require('fs');
  var cluster = require('cluster');
  var os = require('os');
 
- // Load configuration
  require('./lib/configReader.js');
 
- // Load log system
  require('./lib/logger.js');
 
- // Initialize log system
  var logSystem = 'master';
  require('./lib/exceptionWriter.js')(logSystem);
 
- // Pool informations
  log('info', logSystem, 'Starting Cryptonote Node.JS pool version %s', [version]);
 
- // Check configuration data
  var poolAddress = config.poolServer.poolAddress || null;
  if (!poolAddress || poolAddress.match(/(\s+|\*)/)) {
         log('error', logSystem, 'Invalid pool wallet address in configuration file (poolServer.poolAddress)');
         process.exit();
  }
 
- // Initialize redis database client
  var redis = require('redis');
 
  var redisDB = (config.redis.db && config.redis.db > 0) ? config.redis.db : 0;
@@ -44,7 +34,6 @@
  else
  	config.childPools = [];
 
- // Load pool modules
  if (cluster.isWorker) {
  	switch (process.env.workerType) {
  		case 'pool':
@@ -75,11 +64,9 @@
  	return;
  }
 
- // Developer donations
  if (devFee < 0.2)
  	log('info', logSystem, 'Developer donation \(devDonation\) is set to %d\%, Please consider raising it to 0.2\% or higher !!!', [devFee]);
 
- // Run a single module ?
  var singleModule = (function () {
  	var validModules = ['pool', 'api', 'unlocker', 'payments', 'chartsDataCollector', 'telegramBot'];
 
@@ -95,9 +82,6 @@
  	}
  })();
 
- /**
-  * Start modules
-  **/
  (function init () {
  	checkRedisVersion(function () {
  		if (singleModule) {
@@ -140,9 +124,6 @@
  	});
  })();
 
- /**
-  * Check redis database version
-  **/
  function checkRedisVersion (callback) {
  	redisClient.info(function (error, response) {
  		if (error) {
@@ -173,9 +154,6 @@
  	});
  }
 
- /**
-  * Spawn pool workers module
-  **/
  function spawnPoolWorkers () {
  	if (!config.poolServer || !config.poolServer.enabled || !config.poolServer.ports || config.poolServer.ports.length === 0) return;
 
@@ -238,9 +216,6 @@
  	}, 10);
  }
 
- /**
-  * Spawn pool workers module
-  **/
  function spawnChildDaemons () {
  	if (!config.poolServer || !config.poolServer.enabled || !config.poolServer.ports || config.poolServer.ports.length === 0) return;
 
@@ -296,10 +271,6 @@
  	}, 10);
  }
 
-
- /**
-  * Spawn daemon module
-  **/
  function spawnDaemon () {
  	if (!config.poolServer || !config.poolServer.enabled || !config.poolServer.ports || config.poolServer.ports.length === 0) return;
 
@@ -329,9 +300,6 @@
  		});
  }
 
- /**
-  * Spawn block unlocker module
-  **/
  function spawnBlockUnlocker () {
  	if (!config.blockUnlocker || !config.blockUnlocker.enabled) return;
 
@@ -346,9 +314,6 @@
  	});
  }
 
- /**
-  * Spawn payment processor module
-  **/
  function spawnPaymentProcessor () {
  	if (!config.payments || !config.payments.enabled) return;
 
@@ -363,9 +328,6 @@
  	});
  }
 
- /**
-  * Spawn API module
-  **/
  function spawnApi () {
  	if (!config.api || !config.api.enabled) return;
 
@@ -380,9 +342,6 @@
  	});
  }
 
- /**
-  * Spawn charts data collector module
-  **/
  function spawnChartsDataCollector () {
  	if (!config.charts) return;
 
@@ -397,9 +356,6 @@
  	});
  }
 
- /**
-  * Spawn telegram bot module
-  **/
  function spawnTelegramBot () {
  	if (!config.telegram || !config.telegram.enabled || !config.telegram.token) return;
 

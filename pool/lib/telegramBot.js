@@ -1,13 +1,3 @@
-/**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Telegram bot
- *
- * Author: Daniel Vandal
- **/
-
-// Load required modules
 process.env.NTBA_FIX_319 = 1;
 let TelegramBot = require('node-telegram-bot-api');
 
@@ -17,15 +7,9 @@ let apiInterfaces = require('./apiInterfaces.js')(config.daemon, config.wallet, 
 let notifications = require('./notifications.js');
 let utils = require('./utils.js');
 
-// Initialize log system
 let logSystem = 'telegramBot';
 require('./exceptionWriter.js')(logSystem);
 
-/**
- * Check telegram configuration
- **/
-
-// Check bot settings
 if (!config.telegram) {
 	log('error', logSystem, 'Telegram is not enabled');
 } else if (!config.telegram.enabled) {
@@ -34,7 +18,6 @@ if (!config.telegram) {
 	log('error', logSystem, 'No telegram token found in configuration');
 }
 
-// Bot commands
 let botCommands = {
 	stats: "/stats",
 	report: "/report",
@@ -46,16 +29,10 @@ if (config.telegram.botCommands) {
 	Object.assign(botCommands, config.telegram.botCommands);
 }
 
-// Telegram channel
 let channel = config.telegram.channel.replace(/@/g, '') || '';
 
-// Periodical channel statistics
 let periodicalStats = (channel && config.telegram.channelStats && config.telegram.channelStats.enabled)
 let statsInterval = (config.telegram.channelStats && config.telegram.channelStats.interval > 0) ? parseInt(config.telegram.channelStats.interval) : 0;
-
-/**
- * Initialize new telegram bot
- **/
 
 log('info', logSystem, 'Started');
 
@@ -64,20 +41,12 @@ let bot = new TelegramBot(token, {
 	polling: true
 });
 
-/**
- * Periodical pool statistics
- **/
-
 if (periodicalStats && statsInterval > 0 && channel) {
 	log('info', logSystem, 'Sending pool statistics to telegram channel @%s each %d minutes', [channel, statsInterval]);
 	setInterval(function () {
 		sendPoolStats('@' + channel);
 	}, (statsInterval * 60) * 1000);
 }
-
-/**
- * Handle "/start" or "/help"
- **/
 
 bot.onText(new RegExp('^/(start|help)$', 'i'), (telegramMsg) => {
 	if (telegramMsg.from.id != telegramMsg.chat.id) return;
@@ -96,10 +65,6 @@ bot.onText(new RegExp('^/(start|help)$', 'i'), (telegramMsg) => {
 		parse_mode: 'Markdown'
 	});
 });
-
-/**
- * Pool Statistics
- **/
 
 bot.onText(new RegExp('^' + botCommands['stats'] + '$', 'i'), (telegramMsg) => {
 	log('info', logSystem, 'Pool statistics request from @%s (%s)', [telegramMsg.from.username, telegramMsg.from.id]);
@@ -150,10 +115,6 @@ function sendPoolStats (chatId) {
 		});
 	});
 }
-
-/**
- * Miner Statistics
- **/
 
 bot.onText(new RegExp('^' + botCommands['report'] + '$', 'i'), (telegramMsg) => {
 	if (telegramMsg.from.id != telegramMsg.chat.id) return;
@@ -225,10 +186,6 @@ function sendMinerStats (telegramMsg, address) {
 		apiInterfaces.pool(apiRequest, function (error, response) {});
 	});
 }
-
-/**
- * Miner notifications
- **/
 
 bot.onText(new RegExp('^' + botCommands['notify'] + '$', 'i'), (telegramMsg) => {
 	if (telegramMsg.from.id != telegramMsg.chat.id) return;
@@ -305,10 +262,6 @@ function disableMinerNotifications (telegramMsg, address) {
 		apiInterfaces.pool(apiRequest, function (error, response) {});
 	});
 }
-
-/**
- * Blocks notifications
- **/
 
 bot.onText(new RegExp('^' + botCommands['blocks'] + '$', 'i'), (telegramMsg) => {
 	if (telegramMsg.from.id != telegramMsg.chat.id) return;

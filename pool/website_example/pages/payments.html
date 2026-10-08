@@ -10,10 +10,8 @@
 
 <script id="siblingTemplate" type="text/x-handlebars-template">
   <div role="tabpanel" class="tab-pane {{active}}" id="{{coin}}">
-      <!-- Statistics -->
       <div class="row paymentsStats">
 
-          <!-- Total Payments -->
           <div class="col-lg-3 col-sm-6">
               <div class="infoBox hoverExpandEffect mergedBg">
                   <div class="icon">
@@ -26,7 +24,6 @@
               </div>
           </div>
 
-          <!-- Minimum Payment Threshold -->
           <div class="col-lg-3 col-sm-6">
               <div class="infoBox hoverExpandEffect mergedBg">
                   <div class="icon">
@@ -39,7 +36,6 @@
               </div>
           </div>
 
-          <!-- Payment Interval -->
           <div class="col-lg-3 col-sm-6">
               <div class="infoBox hoverExpandEffect mergedBg">
                   <div class="icon">
@@ -52,7 +48,6 @@
               </div>
           </div>
 
-          <!-- Denomination Unit -->
           <div class="col-lg-3 col-sm-6">
               <div class="infoBox hoverExpandEffect mergedBg">
                   <div class="icon">
@@ -67,7 +62,6 @@
 
       </div>
 
-      <!-- Report -->
       <div class="card push-up-10">
           <div id="paymentsReport{{coin}}" class="table-responsive">
               <table class="table table-hover table-striped">
@@ -94,12 +88,10 @@
   </div>
 </script>
 
-<!-- Javascript -->
 <script>
 
 let xhrGetPayments = {}
 let ranOnce = false
-// Update current page
 currentPage = {
     destroy: function(){
         if (xhrGetPayments) {

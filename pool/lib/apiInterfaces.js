@@ -1,11 +1,3 @@
-/**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Handle communications to APIs
- **/
-
-// Load required modules
 var http = require('http');
 var https = require('https');
 
@@ -48,9 +40,6 @@ function jsonHttpRequest (host, port, data, callback, path) {
 	req.end(data);
 }
 
-/**
- * Send RPC request
- **/
 function rpc (host, port, method, params, callback) {
 	var data = JSON.stringify({
 		id: "0",
@@ -67,9 +56,6 @@ function rpc (host, port, method, params, callback) {
 	});
 }
 
-/**
- * Send RPC requests in batch mode
- **/
 function batchRpc (host, port, array, callback) {
 	var rpcArray = [];
 	for (var i = 0; i < array.length; i++) {
@@ -84,16 +70,10 @@ function batchRpc (host, port, array, callback) {
 	jsonHttpRequest(host, port, data, callback);
 }
 
-/**
- * Send RPC request to pool API
- **/
 function poolRpc (host, port, path, callback) {
 	jsonHttpRequest(host, port, '', callback, path);
 }
 
-/**
- * Exports API interfaces functions
- **/
 module.exports = function (daemonConfig, walletConfig, poolApiConfig) {
 	return {
 		batchRpcDaemon: function (batchArray, callback) {

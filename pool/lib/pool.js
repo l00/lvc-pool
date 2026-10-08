@@ -1,11 +1,7 @@
 /**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Pool TCP daemon
- **/
-
-// Load required modules
+ * Stratum server (one per worker process). Fetches block templates from the daemon, hands out
+ * jobs, validates and records shares (including the PPLNS share log), and submits found blocks.
+ */
 let fs = require('fs');
 let net = require('net');
 let tls = require('tls');
@@ -21,14 +17,11 @@ let cnHashing = require('cryptonight-hashing');
 if (config.hashingUtil) {
 	cnHashing = require('turtlecoin-crypto');
 }
-// Set nonce pattern - must exactly be 8 hex chars
 let noncePattern = new RegExp("^[0-9A-Fa-f]{8}$");
 
-// Set redis database cleanup interval
 let cleanupInterval = config.redis.cleanupInterval && config.redis.cleanupInterval > 0 ? config.redis.cleanupInterval : 15;
 let fallBackCoin = typeof config.poolServer.fallBackCoin !== 'undefined' && config.poolServer.fallBackCoin ? config.poolServer.fallBackCoin : 0
 
-// Initialize log system
 let logSystem = 'pool';
 require('./exceptionWriter.js')(logSystem);
 
@@ -37,7 +30,6 @@ let log = function (severity, system, text, data) {
 	global.log(severity, system, threadId + text, data);
 };
 
-// Set cryptonight algorithm
 let cnAlgorithm = config.cnAlgorithm || "cryptonight";
 let cnVariant = config.cnVariant || 0;
 let cnBlobType = config.cnBlobType || 0;
@@ -49,14 +41,12 @@ if (!cnHashing || !cnHashing[cnAlgorithm]) {
 	cryptoNight = cnHashing[cnAlgorithm];
 }
 
-// Set instance id
 let instanceId = utils.instanceId();
 
-// Pool variables
 let poolStarted = false;
 let connectedMiners = {};
-// Get merged mining tag reseved space size
-let POOL_NONCE_SIZE = 16 + 1; // +1 for old XMR/new TRTL bugs
+// one byte more than needed: cryptonote daemons report reserved_offset one byte into the reserved area
+let POOL_NONCE_SIZE = 16 + 1;
 let EXTRA_NONCE_TEMPLATE = "02" + POOL_NONCE_SIZE.toString(16) + "00".repeat(POOL_NONCE_SIZE);
 let POOL_NONCE_MM_SIZE = POOL_NONCE_SIZE + utils.cnUtil.get_merged_mining_nonce_size();
 let EXTRA_NONCE_NO_CHILD_TEMPLATE = "02" + POOL_NONCE_MM_SIZE.toString(16) + "00".repeat(POOL_NONCE_MM_SIZE);
@@ -66,7 +56,6 @@ function randomIntFromInterval (min, max) {
 	return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-// Pool settings
 let shareTrustEnabled = config.poolServer.shareTrust && config.poolServer.shareTrust.enabled;
 let shareTrustStepFloat = shareTrustEnabled ? config.poolServer.shareTrust.stepDown / 100 : 0;
 let shareTrustMinFloat = shareTrustEnabled ? config.poolServer.shareTrust.min / 100 : 0;
@@ -77,7 +66,6 @@ let perIPStats = {};
 
 let slushMiningEnabled = config.poolServer.slushMining && config.poolServer.slushMining.enabled;
 
-// PPLNS (Levcoin patch): shares paid from a rolling window instead of per round.
 let pplnsEnabled = !!(config.poolServer.pplns && config.poolServer.pplns.enabled);
 let pplnsWindowFactor = pplnsEnabled ? (config.poolServer.pplns.windowFactor || 2) : 0;
 let pplnsMaxShares = pplnsEnabled ? (config.poolServer.pplns.maxShares || 500000) : 0;
@@ -85,9 +73,8 @@ if (pplnsEnabled && slushMiningEnabled) {
 	log('error', logSystem, 'pplns and slushMining cannot both be enabled');
 	process.exit(1);
 }
-// KEYS[1] share log (newest first), KEYS[2] output scores hash, ARGV[1] window size in difficulty.
-// Walks newest to oldest until the window is filled; the oldest share counts only partially.
-// Returns the difficulty actually covered (less than the window if the log is too short).
+// walks the share log newest to oldest until the window difficulty is covered (the oldest share counts
+// partially) and writes the per-login totals to KEYS[2]. returns the difficulty covered
 const PPLNS_WINDOW_SCRIPT = `
 local window = tonumber(ARGV[1])
 local total, start, chunk = 0, 0, 1000
@@ -126,6 +113,7 @@ if (config.poolServer.paymentId.validations == null) {
 
 config.isRandomX = config.isRandomX || false;
 
+// byte offsets in the template blob: previous block hash, and from the nonce tag to the reserved area
 let previousOffset = config.previousOffset || 7;
 let offset = config.offset || 2;
 config.daemonType = config.daemonType || 'default';
@@ -146,31 +134,17 @@ if (mergedMining) {
 	config.childPools = config.childPools.filter(pool => pool.enabled);
 }
 
-
-// Block templates
 let validBlockTemplates = mergedMining ? Create2DArray(config.childPools.length) : Create2DArray(1);
 let currentBlockTemplate = [];
 
-
-// Child Block templates
 let currentChildBlockTemplate = new Array(mergedMining ? config.childPools.length : 1);
 
-
-// Difficulty buffer
 let diff1 = bignum('FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', 16);
 
-/**
- * Convert buffer to byte array
- **/
 Buffer.prototype.toByteArray = function () {
 	return Array.prototype.slice.call(this, 0);
 };
 
-/**
- * Periodical updaters
- **/
-
-// Variable difficulty retarget
 setInterval(function () {
 	let now = Date.now() / 1000 | 0;
 	for (let minerId in connectedMiners) {
@@ -181,7 +155,6 @@ setInterval(function () {
 	}
 }, config.poolServer.varDiff.retargetTime * 1000);
 
-// Every 30 seconds clear out timed-out miners and old bans
 setInterval(function () {
 	let now = Date.now();
 	let timeout = config.poolServer.minerTimeout * 1000;
@@ -207,9 +180,6 @@ setInterval(function () {
 
 }, 30000);
 
-/**
- * Handle multi-thread messages
- **/
 process.on('message', function (message) {
 	switch (message.type) {
 		case 'banIP':
@@ -255,9 +225,6 @@ process.on('message', function (message) {
 	}
 });
 
-/**
- * Block template
- **/
 function BlockTemplate (template, parent, indexOfChildPool) {
 	this.difficulty = template.difficulty;
 	this.height;
@@ -296,12 +263,10 @@ function BlockTemplate (template, parent, indexOfChildPool) {
 		log('error', logSystem, "INTERNAL ERROR: Couldn't find extra nonce data in blob!");
 		this.reserveOffset = template.reserveOffset || template.reserved_offset;
 	}
-	// Copy the Instance ID to the reserve offset + 4 bytes deeper.  Copy in 4 bytes.
+	// reserved area: [0-3] extra nonce, [4-7] instance id, [12-15] nonce space for downstream proxies
 	instanceId.copy(this.buffer, this.reserveOffset + 4, 0, 4);
 
-	// Reset nonce - this is the per-miner/pool nonce
 	this.extraNonce = 0;
-	// The clientNonceLocation is the location at which the client pools should set the nonces for each of their clients.
 	this.clientNonceLocation = this.reserveOffset + 12;
 
 	this.prev_hash = Buffer.alloc(32);
@@ -316,17 +281,11 @@ BlockTemplate.prototype = {
 		return utils.cnUtil.convert_blob(this.buffer, cnBlobType).toString('hex');
 	},
 	nextBlobWithChildNonce: function () {
-		// Write a 32 bit integer, big-endian style to the 0 byte of the reserve offset.
 		this.buffer.writeUInt32BE(++this.extraNonce, this.reserveOffset);
-		// Don't convert the blob to something hashable.  You bad.
 		return this.buffer.toString('hex');
 	}
 };
 
-
-/**
- * Process block template
- **/
 function processBlockTemplate (template, indexOfChildPool) {
 	let block_template = new BlockTemplate(template, true, indexOfChildPool);
 
@@ -342,17 +301,11 @@ function processBlockTemplate (template, indexOfChildPool) {
 	notifyConnectedMiners(indexOfChildPool);
 }
 
-
-
-/**
- * Process child block template
- **/
 function processChildBlockTemplate (indexOfChildPool, template) {
 	let block_template = new BlockTemplate(template, false);
 
 	currentChildBlockTemplate[indexOfChildPool] = block_template;
 
-	// Update the parent block template to include this new child
 	if (currentBlockTemplate[indexOfChildPool]) {
 		processBlockTemplate(currentBlockTemplate[indexOfChildPool], indexOfChildPool);
 	}
@@ -367,9 +320,6 @@ function notifyConnectedMiners (indexOfChildPool) {
 	}
 }
 
-/**
- * Variable difficulty
- **/
 let VarDiff = (function () {
 	let variance = config.poolServer.varDiff.variancePercent / 100 * config.poolServer.varDiff.targetTime;
 	return {
@@ -392,9 +342,6 @@ function GetRewardTypeAsKey (rewardType) {
 	}
 }
 
-/**
- * Miner
- **/
 function Miner (rewardType, childRewardType, id, childPoolIndex, login, pass, ip, port, agent, childLogin, startingDiff, noRetarget, pushMessage) {
 	this.rewardType = rewardType;
 	this.childRewardType = childRewardType;
@@ -426,7 +373,6 @@ function Miner (rewardType, childRewardType, id, childPoolIndex, login, pass, ip
 	this.validJobs = [];
 	this.workerName = pass;
 
-	// Vardiff related variables
 	this.shareTimeRing = utils.ringBuffer(16);
 	this.lastShareTime = Date.now() / 1000 | 0;
 
@@ -572,7 +518,6 @@ Miner.prototype = {
 	},
 	checkBan: function (validShare) {
 		if (!banningEnabled) return;
-		// Init global per-ip shares stats
 		if (!perIPStats[this.ip]) {
 			perIPStats[this.ip] = {
 				validShares: 0,
@@ -625,13 +570,9 @@ validateMinerPaymentId_difficulty = (address, ip, poolServerConfig, coin, sendRe
 	return true;
 }
 
-/**
- * Handle miner method
- **/
 function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage) {
 	let miner = connectedMiners[params.id];
 
-	// Check for ban here, so preconnected attackers can't continue to screw you
 	if (IsBannedIp(ip)) {
 		sendReply('Your IP is banned');
 		return;
@@ -679,7 +620,6 @@ function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage
 				childLogin = childLogin.replace(/\s/g, '');
 				childLogin = utils.cleanupSpecialChars(childLogin);
 
-
 				let addr = childLogin.split(config.poolServer.paymentId.addressSeparator);
 				address = addr[0] || null;
 				paymentId = addr[1] || null;
@@ -688,7 +628,6 @@ function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage
 					log('warn', logSystem, 'No address specified for login');
 					sendReply('No address specified for login');
 				}
-
 
 				if (paymentId && config.poolServer.paymentId.validation) {
 					let valid = false;
@@ -731,7 +670,6 @@ function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage
 					return;
 				}
 			}
-
 
 			let difficulty = portData.difficulty;
 			let noRetarget = false;
@@ -840,7 +778,6 @@ function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage
 				return;
 			}
 
-			// Force lowercase for further comparison
 			params.nonce = params.nonce.toLowerCase();
 
 			if (!miner.proxy) {
@@ -947,9 +884,6 @@ function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage
 	}
 }
 
-/**
- * New connected worker
- **/
 function newConnectedWorker (miner) {
 	log('info', logSystem, 'Miner connected %s@%s on port', [miner.login, miner.ip, miner.port]);
 	if (miner.workerName !== 'undefined') log('info', logSystem, 'Worker Name: %s', [miner.workerName]);
@@ -975,7 +909,6 @@ function newConnectedWorker (miner) {
 
 		redisClient.hincrby(`${config.childPools[miner.activeChildPool].coin}:active_connections${miner.childRewardTypeAsKey}`, `${miner.childLogin}~${miner.workerName}`, 1, function (error, connectedWorkers) {});
 
-
 		let redisCommands = config.childPools.map(item => {
 			return ['hdel', `${config.coin}:workers:${miner.login}`, `${item.coin}`, ]
 		})
@@ -993,9 +926,6 @@ function newConnectedWorker (miner) {
 	}
 }
 
-/**
- * Remove connected worker
- **/
 function removeConnectedWorker (miner, reason) {
 	redisClient.hincrby(`${config.coin}:ports:${miner.port}`, 'users', '-1');
 	if (mergedMining) {
@@ -1025,9 +955,6 @@ function removeConnectedWorker (miner, reason) {
 	});
 }
 
-/**
- * Return if IP has been banned
- **/
 function IsBannedIp (ip) {
 	if (!banningEnabled || !bannedIPs[ip]) return false;
 
@@ -1052,20 +979,15 @@ function recordShareData (miner, job, shareDiff, blockCandidate, hashHex, shareT
 	let workerName = miner.workerName;
 	let rewardType = pool !== null ? miner.childRewardType : miner.rewardType;
 	let updateScore;
-	// Weighting older shares lower than newer ones to prevent pool hopping
 	if (slushMiningEnabled) {
-		// We need to do this via an eval script because we need fetching the last block time and
-		// calculating the score to run in a single transaction (otherwise we could have a race
-		// condition where a block gets discovered between the time we look up lastBlockFound and
-		// insert the score, which would give the miner an erroneously huge proportion on the new block)
+		// eval so reading lastBlockFound and adding the decayed score happen atomically
 		updateScore = ['eval', `
             local age = (ARGV[3] - redis.call('hget', KEYS[2], 'lastBlockFound')) / 1000
             local score = string.format('%.17g', ARGV[2] * math.exp(age / ARGV[4]))
             redis.call('hincrbyfloat', KEYS[1], ARGV[1], score)
             return {score, tostring(age)}
             `,
-			2 /*keys*/ , coin + ':scores:roundCurrent', coin + ':stats',
-			/* args */
+			2  , coin + ':scores:roundCurrent', coin + ':stats',
 			login, job.difficulty, Date.now(), config.poolServer.slushMining.weight
 		];
 	} else {
@@ -1090,7 +1012,7 @@ function recordShareData (miner, job, shareDiff, blockCandidate, hashHex, shareT
 		redisCommands.push(['expire', `${coin}:unique_workers:${login}~${workerName}`, (86400 * cleanupInterval)]);
 	}
 
-	// PPLNS: keep a rolling log of shared-pool shares, newest first, as "login:difficulty"
+	// pplns share log, newest first, as "login:difficulty"
 	if (pplnsEnabled && rewardType === 'prop' && pool === null) {
 		redisCommands.push(['lpush', `${coin}:pplns:shares`, [login, job.difficulty].join(':')]);
 		redisCommands.push(['ltrim', `${coin}:pplns:shares`, 0, pplnsMaxShares - 1]);
@@ -1098,10 +1020,9 @@ function recordShareData (miner, job, shareDiff, blockCandidate, hashHex, shareT
 
 	if (blockCandidate) {
 		redisCommands.push(['hset', `${coin}:stats`, `lastBlockFound${rewardType}`, Date.now()]);
+		// pplns pays the last window of shares across rounds instead of this round's scores. it runs in the
+		// same multi as the winning share, so that share is included
 		if (pplnsEnabled && rewardType === 'prop' && pool === null) {
-			// Pay the last N difficulty of shares (N = windowFactor x network difficulty) across round
-			// boundaries. Runs in the same MULTI as the winning share's LPUSH, so it is included.
-			// The round's PROP scores are discarded; the unlocker pays from scores:prop:round<height>.
 			redisCommands.push(['del', `${coin}:scores:prop:round${job_height}`]);
 			redisCommands.push(['eval', PPLNS_WINDOW_SCRIPT, 2, `${coin}:pplns:shares`, `${coin}:scores:prop:round${job_height}`,
 				Math.floor(blockTemplate.difficulty * pplnsWindowFactor)]);
@@ -1211,9 +1132,6 @@ function getShareBuffer (miner, job, blockTemplate, params) {
 	}
 }
 
-/**
- * Process miner share data
- **/
 function processShare (miner, job, blockTemplate, params) {
 	let shareBuffer = getShareBuffer(miner, job, blockTemplate, params)
 	if (!shareBuffer) {
@@ -1321,9 +1239,6 @@ function processShare (miner, job, blockTemplate, params) {
 	return true;
 }
 
-/**
- * Start pool server on TCP ports
- **/
 let httpResponse = ' 200 OK\nContent-Type: text/plain\nContent-Length: 20\n\nMining server online';
 
 function startPoolServerTcp (callback) {
@@ -1378,7 +1293,7 @@ function startPoolServerTcp (callback) {
 
 			socket.on('data', function (d) {
 					dataBuffer += d;
-					if (Buffer.byteLength(dataBuffer, 'utf8') > 10240) { //10KB
+					if (Buffer.byteLength(dataBuffer, 'utf8') > 10240) {
 						dataBuffer = null;
 						log('warn', logSystem, 'Socket flooding detected and prevented from %s', [socket.remoteAddress]);
 						socket.destroy();
@@ -1492,10 +1407,6 @@ function startPoolServerTcp (callback) {
 		}
 	});
 }
-
-/**
- * Initialize pool server
- **/
 
 (function init (loop) {
 	async.waterfall([

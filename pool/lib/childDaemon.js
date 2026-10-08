@@ -1,11 +1,10 @@
 let async = require('async');
 let apiInterfaces = require('./apiInterfaces.js')(config.daemon, config.wallet, config.api);
 let lastHash;
-let POOL_NONCE_SIZE = 16 + 1; // +1 for old XMR/new TRTL bugs
+let POOL_NONCE_SIZE = 16 + 1;
 
 let logSystem = 'childDaemon'
 require('./exceptionWriter.js')(logSystem);
-
 
 let pool = config.childPools[process.env.poolId];
 
@@ -25,7 +24,6 @@ let templateData = JSON.stringify({
 		wallet_address: pool.poolAddress
 	}
 })
-
 
 function runInterval () {
 	async.waterfall([

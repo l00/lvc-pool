@@ -1,4 +1,3 @@
-<!-- Top 10 miners -->
 <h3><span data-tkey="top10miners">Top 10 miners</span></h3>
 
 <ul class="nav nav-tabs" id="blocksTabs">
@@ -33,11 +32,9 @@
     </div>
 </script>
 
-<!-- Javascript -->
 <script>
 let ranOnce = false
 let xhrGetMiners = {}
-// Update current page
 currentPage = {
     destroy: function(){
         if (xhrGetMiners) {
@@ -63,7 +60,6 @@ function RunOnce() {
     })
     return true
 }
-
 
 top10Miners_InitTemplate(xhrGetMiners, ranOnce)
 

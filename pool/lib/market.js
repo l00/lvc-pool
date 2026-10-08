@@ -1,20 +1,8 @@
-/**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Market Exchanges
- **/
-
-// Load required modules
 let apiInterfaces = require('./apiInterfaces.js')(config.daemon, config.wallet);
 
-// Initialize log system
 let logSystem = 'market';
 require('./exceptionWriter.js')(logSystem);
 
-/**
- * Get market prices
- **/
 exports.get = function (exchange, tickers, callback) {
 	if (!exchange) {
 		callback('No exchange specified', null);
@@ -84,10 +72,6 @@ exports.get = function (exchange, tickers, callback) {
 	});
 }
 
-/**
- * Get Exchange Market Prices
- **/
-
 let marketRequestsCache = {};
 
 function getExchangeMarkets (exchange, callback) {
@@ -97,7 +81,6 @@ function getExchangeMarkets (exchange, callback) {
 	}
 	exchange = exchange.toLowerCase();
 
-	// Return cache if available
 	let cacheKey = exchange;
 	let currentTimestamp = Date.now() / 1000;
 
@@ -111,7 +94,6 @@ function getExchangeMarkets (exchange, callback) {
 	let price = 0.0;
 	let data = {};
 
-	// Altex
 	if (exchange == "altex") {
 		apiInterfaces.jsonHttpRequest('api.altex.exchange', 443, '', function (error, response) {
 			if (error) log('error', logSystem, 'API request to %s has failed: %s', [exchange, error]);
@@ -138,7 +120,6 @@ function getExchangeMarkets (exchange, callback) {
 		}, '/v1/ticker');
 	}
 
-	// Crex24
 	else if (exchange == "crex24") {
 		apiInterfaces.jsonHttpRequest('api.crex24.com', 443, '', function (error, response) {
 			if (error) log('error', logSystem, 'API request to %s has failed: %s', [exchange, error]);
@@ -171,7 +152,6 @@ function getExchangeMarkets (exchange, callback) {
 		}, '/CryptoExchangeService/BotPublic/ReturnTicker');
 	}
 
-	// Cryptopia
 	else if (exchange == "cryptopia") {
 		apiInterfaces.jsonHttpRequest('www.cryptopia.co.nz', 443, '', function (error, response) {
 			if (error) log('error', logSystem, 'API request to %s has failed: %s', [exchange, error]);
@@ -204,7 +184,6 @@ function getExchangeMarkets (exchange, callback) {
 		}, '/api/GetMarkets');
 	}
 
-	// Stocks.Exchange
 	else if (exchange == "stocks.exchange") {
 		apiInterfaces.jsonHttpRequest('stocks.exchange', 443, '', function (error, response) {
 			if (error) log('error', logSystem, 'API request to %s has failed: %s', [exchange, error]);
@@ -237,7 +216,6 @@ function getExchangeMarkets (exchange, callback) {
 		}, '/api2/ticker');
 	}
 
-	// TradeOgre
 	else if (exchange == "tradeogre") {
 		apiInterfaces.jsonHttpRequest('tradeogre.com', 443, '', function (error, response) {
 			if (error) log('error', logSystem, 'API request to %s has failed: %s', [exchange, error]);
@@ -317,7 +295,6 @@ function getExchangeMarkets (exchange, callback) {
 			callback(null, data);
 		}, '/api2/ticker');
 	}
-	// Btc-Alpha
 	else if (exchange == "btcalpha") {
 		apiInterfaces.jsonHttpRequest('btc-alpha.com', 443, '', function (error, response) {
 			if (error) log('error', logSystem, 'API request to %s has failed: %s', [exchange, error]);
@@ -341,9 +318,8 @@ function getExchangeMarkets (exchange, callback) {
 				data: data
 			};
 			callback(null, data);
-		}, '/api/v1/exchanges/' /*JUST FOR 20DEC!! '/api/v1/exchanges/?pair=BDX_BTC'*/ );
+		}, '/api/v1/exchanges/'  );
 	}
-	// tradesatoshi
 	else if (exchange == "tradesatoshi") {
 		apiInterfaces.jsonHttpRequest('tradesatoshi.com', 443, '', function (error, response) {
 			if (error) console.log('error', 'API request to has failed: ' + error);
@@ -446,16 +422,11 @@ function getExchangeMarkets (exchange, callback) {
 			}
 		}, `/api/v3/coins/list`);
 	}
-	// Unknown
 	else {
 		callback('Exchange not supported: ' + exchange);
 	}
 }
 exports.getExchangeMarkets = getExchangeMarkets;
-
-/**
- * Get Exchange Market Price
- **/
 
 let priceRequestsCache = {};
 
@@ -474,7 +445,6 @@ function getExchangePrice (exchange, base, target, callback) {
 	base = base.toUpperCase();
 	target = target.toUpperCase();
 
-	// Return cache if available
 	let cacheKey = exchange + '-' + base + '-' + target;
 	let currentTimestamp = Date.now() / 1000;
 
@@ -488,7 +458,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		return;
 	}
 
-	// Cryptonator
 	if (exchange == "cryptonator") {
 		ticker = base + '-' + target;
 		apiInterfaces.jsonHttpRequest('api.cryptonator.com', 443, '', function (error, response) {
@@ -512,7 +481,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		}, '/api/ticker/' + ticker);
 	}
 
-	// Altex
 	else if (exchange == "altex") {
 		getExchangeMarkets(exchange, function (error, data) {
 			if (error) log('error', logSystem, 'API request to %s has failed: %s', [exchange, error]);
@@ -536,7 +504,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		});
 	}
 
-	// Crex24
 	else if (exchange == "crex24") {
 		ticker = base + '_' + target;
 		apiInterfaces.jsonHttpRequest('api.crex24.com', 443, '', function (error, response) {
@@ -560,7 +527,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		}, '/CryptoExchangeService/BotPublic/ReturnTicker?request=[NamePairs=' + ticker + ']');
 	}
 
-	// Cryptopia
 	else if (exchange == "cryptopia") {
 		ticker = base + '_' + target;
 		apiInterfaces.jsonHttpRequest('www.cryptopia.co.nz', 443, '', function (error, response) {
@@ -583,7 +549,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		}, '/api/GetMarket/' + ticker);
 	}
 
-	// Stocks.Exchange
 	else if (exchange == "stocks.exchange") {
 		getExchangeMarkets(exchange, function (error, data) {
 			if (error) log('error', logSystem, 'API request to %s has failed: %s', [exchange, error]);
@@ -606,7 +571,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		});
 	}
 
-	// TradeOgre
 	else if (exchange == "tradeogre") {
 		ticker = target + '-' + base;
 		apiInterfaces.jsonHttpRequest('tradeogre.com', 443, '', function (error, response) {
@@ -629,7 +593,6 @@ function getExchangePrice (exchange, base, target, callback) {
 			callback(error, data);
 		}, '/api/v2/ticker/' + ticker);
 	}
-	// Btc-Alpha
 	else if (exchange == "btcalpha") {
 		ticker = base + '_' + target;
 		apiInterfaces.jsonHttpRequest('btc-alpha.com', 443, '', function (error, response) {
@@ -655,7 +618,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		}, '/api/v1/exchanges/?pair=' + ticker + '&limit=1');
 
 	}
-	// tradesatoshi
 	else if (exchange == "tradesatoshi") {
 		ticker = base + '_' + target;
 		apiInterfaces.jsonHttpRequest('tradesatoshi.com', 443, '', function (error, response) {
@@ -681,7 +643,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		}, '/api/public/getmarketsummary?market=' + ticker);
 
 	}
-	// coinmarketcap
 	else if (exchange == "coinmarketcap") {
 		apiInterfaces.jsonHttpRequest('api.coinmarketcap.com', 443, '', function (error, response) {
 
@@ -706,7 +667,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		}, '/v2/ticker/1/?convert=' + target);
 
 	}
-	// tradecx
 	else if (exchange == "tradecx") {
 		apiInterfaces.jsonHttpRequest('tradecx.io', 443, '', function (error, response) {
 
@@ -731,7 +691,6 @@ function getExchangePrice (exchange, base, target, callback) {
 		}, '/v2/tickers/' + target);
 
 	}
-	// Unknown
 	else {
 		callback('Exchange not supported: ' + exchange);
 	}

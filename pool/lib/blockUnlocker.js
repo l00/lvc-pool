@@ -1,11 +1,7 @@
 /**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Block unlocker
- **/
-
-// Load required modules
+ * Block unlocker. Moves found blocks from candidates to matured once they are `depth` blocks deep,
+ * marks orphans, and credits miner balances from the block's round scores (PPLNS window).
+ */
 let async = require('async');
 
 let apiInterfaces = require('./apiInterfaces.js')(config.daemon, config.wallet, config.api);
@@ -15,20 +11,14 @@ let utils = require('./utils.js');
 let slushMiningEnabled = config.poolServer.slushMining && config.poolServer.slushMining.enabled;
 let pplnsEnabled = !!(config.poolServer.pplns && config.poolServer.pplns.enabled);
 
-// Initialize log system
 let logSystem = 'unlocker';
 require('./exceptionWriter.js')(logSystem);
-
-/**
- * Run block unlocker
- **/
 
 log('info', logSystem, 'Started');
 
 function runInterval () {
 	async.waterfall([
 
-		// Get all block candidates in redis
 		function (callback) {
 			redisClient.zrange(config.coin + ':blocks:candidates', 0, -1, 'WITHSCORES', function (error, results) {
 				if (error) {
@@ -61,10 +51,9 @@ function runInterval () {
 			})
 		},
 
-		// Get the current chain top. Levcoin's daemon reports block_header.depth as
-		// "blocks remaining until unlock" (60 at the tip, counting down and going negative)
-		// instead of confirmations, so maturity is computed from heights instead.
 		function (blocks, callback) {
+			// levcoin's daemon reports block_header.depth as blocks left until unlock, so maturity is
+			// computed from the chain top instead
 			apiInterfaces.rpcDaemon('getlastblockheader', {}, function (error, result) {
 				if (error || !result || !result.block_header) {
 					log('error', logSystem, 'Error with getlastblockheader RPC request %j', [error]);
@@ -75,7 +64,6 @@ function runInterval () {
 			})
 		},
 
-		// Check if blocks are orphaned
 		function (blocks, topHeight, callback) {
 			async.filter(blocks, function (block, mapCback) {
 				let daemonType = config.daemonType ? config.daemonType.toLowerCase() : "default";
@@ -129,7 +117,6 @@ function runInterval () {
 			})
 		},
 
-		// Get worker shares for each unlocked block
 		function (blocks, callback) {
 
 			let redisCommands = blocks.map(function (block) {
@@ -155,7 +142,6 @@ function runInterval () {
 				})
 		},
 
-		// Handle orphaned blocks
 		function (blocks, callback) {
 			let orphanCommands = [];
 			blocks.forEach(function (block) {
@@ -177,8 +163,8 @@ function runInterval () {
 					block.orphaned
 				].join(':')]);
 
-				// Under PPLNS the shares stay in the share log and count toward the next block's window,
-				// so merging them back into the current round would pay them twice.
+				// under pplns the shares stay in the log and count toward the next block, so merging them
+				// back would pay them twice
 				if (block.workerScores && !slushMiningEnabled && !pplnsEnabled) {
 					let workerScores = block.workerScores;
 					Object.keys(workerScores).forEach(function (worker) {
@@ -210,7 +196,6 @@ function runInterval () {
 			}
 		},
 
-		// Handle unlocked blocks
 		function (blocks, callback) {
 			let unlockedBlocksCommands = [];
 			let payments = {};
@@ -264,7 +249,6 @@ function runInterval () {
 
 				if (block.workerScores) {
 					let totalScore = parseFloat(block.score);
-					//deal with solo block
 					if (block.rewardType === 'solo') {
 						let worker = block.login;
 						payments[worker] = (payments[worker] || 0) + reward;

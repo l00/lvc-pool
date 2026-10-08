@@ -1,11 +1,3 @@
-/**
- * Cryptonote Node.JS Pool
- * https://github.com/dvandal/cryptonote-nodejs-pool
- *
- * Pool API
- **/
-
-// Load required modules
 let fs = require('fs');
 let http = require('http');
 let https = require('https');
@@ -20,11 +12,9 @@ let notifications = require('./notifications.js');
 let market = require('./market.js');
 let utils = require('./utils.js');
 
-// Initialize log system
 let logSystem = 'api';
 require('./exceptionWriter.js')(logSystem);
 
-// Data storage variables used for live statistics
 let currentStats = {};
 let minerStats = {};
 let minersHashrate = {};
@@ -32,14 +22,10 @@ let minersHashrate = {};
 let liveConnections = {};
 let addressConnections = {};
 
-/**
- * Handle server requests
- **/
 function handleServerRequest (request, response) {
 	let urlParts = url.parse(request.url, true);
 
 	switch (urlParts.pathname) {
-		// Pool statistics
 		case '/stats':
 			handleStats(urlParts, request, response);
 			break;
@@ -65,32 +51,26 @@ function handleServerRequest (request, response) {
 			liveConnections[key] = response;
 			break;
 
-			// Worker statistics
 		case '/stats_address':
 			handleMinerStats(urlParts, response);
 			break;
 
-			// Payments
 		case '/get_payments':
 			handleGetPayments(urlParts, response);
 			break;
 
-			// Blocks
 		case '/get_blocks':
 			handleGetBlocks(urlParts, response);
 			break;
 
-			// Get market prices
 		case '/get_market':
 			handleGetMarket(urlParts, response);
 			break;
 
-			// Top 10 miners
 		case '/get_top10miners':
 			handleTopMiners(response);
 			break;
 
-			// Miner settings
 		case '/get_miner_payout_level':
 			handleGetMinerPayoutLevel(urlParts, response);
 			break;
@@ -115,7 +95,6 @@ function handleServerRequest (request, response) {
 		case '/get_apis':
 			handleGetApis(response)
 			break
-			// Miners/workers hashrate (used for charts)
 		case '/miners_hashrate':
 			if (!authorize(request, response)) {
 				return;
@@ -129,7 +108,6 @@ function handleServerRequest (request, response) {
 			handleGetWorkersHashrate(response);
 			break;
 
-			// Pool Administration
 		case '/admin_stats':
 			if (!authorize(request, response))
 				return;
@@ -160,7 +138,6 @@ function handleServerRequest (request, response) {
 			handleAdminPorts(request, response);
 			break;
 
-			// Test notifications
 		case '/test_email_notification':
 			if (!authorize(request, response)) {
 				return;
@@ -174,7 +151,6 @@ function handleServerRequest (request, response) {
 			handleTestTelegramNotification(urlParts, response);
 			break;
 
-			// Default response
 		default:
 			response.writeHead(404, {
 				'Access-Control-Allow-Origin': '*'
@@ -184,9 +160,6 @@ function handleServerRequest (request, response) {
 	}
 }
 
-/**
- * Collect statistics data
- **/
 function collectStats () {
 	let startTime = Date.now();
 	let redisFinished;
@@ -200,7 +173,6 @@ function collectStats () {
 		['zrevrange', `${config.coin}:blocks:matured`, 0, config.api.blocks - 1, 'WITHSCORES'],
 		['hgetall', `${config.coin}:scores:prop:roundCurrent`],
 		['hgetall', `${config.coin}:stats`],
-		// ['zcard', `${config.coin}:blocks:matured`],
 		['zrevrange', `${config.coin}:payments:all`, 0, config.api.payments - 1, 'WITHSCORES'],
 		['zcard', `${config.coin}:payments:all`],
 		['keys', `${config.coin}:payments:*`],
@@ -220,14 +192,6 @@ function collectStats () {
 			healthCommands.push(['hget', `${config.coin}:status:daemon`, 'lastStatus']);
 			healthCommands.push(['hget', `${config.coin}:status:wallet`, 'lastStatus']);
 			healthCommands.push(['hget', `${config.coin}:status:price`, 'lastReponse']);
-			/*
-			            config.childPools.forEach(pool => {
-			                healthCommands.push(['hmget', `${pool.coin}:status:daemon`, 'lastStatus']);
-			                healthCommands.push(['hmget', `${pool.coin}:status:wallet`, 'lastStatus']); 
-			                keys.push(pool.coin);
-
-			            })
-			*/
 			redisClient.multi(healthCommands).exec(function (error, replies) {
 
 					if (error) {
@@ -322,7 +286,6 @@ function collectStats () {
 						minerStats[miner]['hashrate'] = minersHashrate[miner];
 					}
 
-
 					data.hashrate = Math.round(totalShares / config.api.hashrateWindow);
 					data.hashrateSolo = Math.round(totalSharesSolo / config.api.hashrateWindow);
 					data.roundScore = 0;
@@ -394,7 +357,7 @@ function collectStats () {
 				networkFee: config.blockUnlocker.networkFee || 0,
 				coin: config.coin,
 				coinUnits: config.coinUnits,
-				coinDecimalPlaces: config.coinDecimalPlaces || 12, // config.coinUnits.toString().length - 1,
+				coinDecimalPlaces: config.coinDecimalPlaces || 12,
 				coinDifficultyTarget: config.coinDifficultyTarget,
 				symbol: config.symbol,
 				depth: config.blockUnlocker.depth,
@@ -424,14 +387,12 @@ function collectStats () {
 			});
 		},
 		charts: function (callback) {
-			// Get enabled charts data
 			charts.getPoolChartsData(function (error, data) {
 				if (error) {
 					callback(error, data);
 					return;
 				}
 
-				// Blocks chart
 				if (!config.charts.blocks || !config.charts.blocks.enabled || !config.charts.blocks.days) {
 					callback(error, data);
 					return;
@@ -528,9 +489,6 @@ function truncateMinerAddress (blocks) {
 	return blocks
 }
 
-/**
- *  Calculate the Diff, shares and totalblocks
- **/
 function calculateBlockData (data, blocks) {
 	for (let i = 0; i < blocks.length; i++) {
 		let block = blocks[i].split(':');
@@ -552,15 +510,11 @@ function calculateBlockData (data, blocks) {
 	}
 }
 
-/**
- * Get Network data
- **/
 let networkDataRpcMode = 'get_info';
 
 function getNetworkData (callback, rpcMode) {
 	if (!rpcMode) rpcMode = networkDataRpcMode;
 
-	// Try get_info RPC method first if available (not all coins support it)
 	if (rpcMode === 'get_info') {
 		apiInterfaces.rpcDaemon('get_info', {}, function (error, reply) {
 			if (error || !reply) {
@@ -577,7 +531,6 @@ function getNetworkData (callback, rpcMode) {
 		});
 	}
 
-	// Else fallback to getlastblockheader
 	else {
 		apiInterfaces.rpcDaemon('getlastblockheader', {}, function (error, reply) {
 			if (error) {
@@ -597,9 +550,6 @@ function getNetworkData (callback, rpcMode) {
 	}
 }
 
-/**
- * Get Last Block data
- **/
 function getLastBlockData (callback) {
 	apiInterfaces.rpcDaemon('getlastblockheader', {}, function (error, reply) {
 		if (error) {
@@ -655,13 +605,9 @@ function handleGetApis (callback) {
 	callback(apis)
 }
 
-/**
- * Broadcast live statistics
- **/
 function broadcastLiveStats () {
 	log('info', logSystem, 'Broadcasting to %d visitors and %d address lookups', [Object.keys(liveConnections).length, Object.keys(addressConnections).length]);
 
-	// Live statistics
 	let processAddresses = {};
 	for (let key in liveConnections) {
 		let addrOffset = key.indexOf(':');
@@ -684,7 +630,6 @@ function broadcastLiveStats () {
 		sendLiveStats(data, destinations);
 	}
 
-	// Workers Statistics
 	processAddresses = {};
 	for (let key in addressConnections) {
 		let addrOffset = key.indexOf(':');
@@ -700,17 +645,13 @@ function broadcastLiveStats () {
 	}
 }
 
-/**
- * Takes a chart data JSON string and uses it to compute the average over the past hour, 6 hours,
- * and 24 hours.  Returns [AVG1, AVG6, AVG24].
- **/
 function extractAverageHashrates (chartdata) {
 	let now = new Date() / 1000 | 0;
 
-	let sums = [0, 0, 0]; // 1h, 6h, 24h
+	let sums = [0, 0, 0];
 	let counts = [0, 0, 0];
 
-	let sets = chartdata ? JSON.parse(chartdata) : []; // [time, avgValue, updateCount]
+	let sets = chartdata ? JSON.parse(chartdata) : [];
 	for (let j in sets) {
 		let hr = sets[j][1];
 		if (now - sets[j][0] <= 1 * 60 * 60) {
@@ -730,9 +671,6 @@ function extractAverageHashrates (chartdata) {
 	return [sums[0] * 1.0 / (counts[0] || 1), sums[1] * 1.0 / (counts[1] || 1), sums[2] * 1.0 / (counts[2] || 1)];
 }
 
-/**
- * Broadcast worker statistics
- **/
 function broadcastWorkerStats (address, destinations) {
 	let redisCommands = [
 		['hgetall', `${config.coin}:workers:${address}`],
@@ -810,9 +748,6 @@ function broadcastWorkerStats (address, destinations) {
 		});
 }
 
-/**
- * Send live statistics to specified destinations
- **/
 function sendLiveStats (data, destinations) {
 	if (!destinations) { 
 		return;
@@ -824,9 +759,6 @@ function sendLiveStats (data, destinations) {
 	}
 }
 
-/**
- * Return pool statistics
- **/
 function handleStats (urlParts, request, response) {
 	let data = currentStats;
 
@@ -847,9 +779,6 @@ function handleStats (urlParts, request, response) {
 	response.end(dataJSON);
 }
 
-/**
- * Return miner (worker) statistics
- **/
 function handleMinerStats (urlParts, response) {
 	let address = urlParts.query.address;
 	let longpoll = (urlParts.query.longpoll === 'true');
@@ -973,9 +902,6 @@ function handleMinerStats (urlParts, response) {
 	}
 }
 
-/**
- * Return payments history
- **/
 function handleGetPayments (urlParts, response) {
 	let paymentKey = ':payments:all';
 
@@ -1013,9 +939,6 @@ function handleGetPayments (urlParts, response) {
 	)
 }
 
-/**
- * Return blocks data
- **/
 function handleGetBlocks (urlParts, response) {
 	redisClient.zrevrangebyscore(
 		`${config.coin}:blocks:matured`,
@@ -1056,9 +979,6 @@ function handleGetBlocks (urlParts, response) {
 		});
 }
 
-/**
- * Get market exchange prices
- **/
 function handleGetMarket (urlParts, response) {
 	response.writeHead(200, {
 		'Access-Control-Allow-Origin': '*',
@@ -1083,7 +1003,6 @@ function handleGetMarket (urlParts, response) {
 		return;
 	}
 
-	// Get market prices
 	market.get(exchange, tickers, function (data) {
 		response.end(JSON.stringify(data));
 	});
@@ -1120,9 +1039,6 @@ function handleGetApis (response) {
 	})
 }
 
-/**
- * Return top 10 miners
- **/
 function handleBlockExplorers (response) {
 	async.waterfall([
 		function (callback) {
@@ -1159,9 +1075,6 @@ function handleBlockExplorers (response) {
 	})
 }
 
-/**
- * Return top 10 miners
- **/
 function handleTopMiners (response) {
 	async.waterfall([
 		function (callback) {
@@ -1220,11 +1133,6 @@ function compareTopMiners (a, b) {
 	return 0;
 }
 
-/**
- * Miner settings: minimum payout level
- **/
-
-// Get current minimum payout level
 function handleGetMinerPayoutLevel (urlParts, response) {
 	response.writeHead(200, {
 		'Access-Control-Allow-Origin': '*',
@@ -1235,7 +1143,6 @@ function handleGetMinerPayoutLevel (urlParts, response) {
 
 	let address = urlParts.query.address;
 
-	// Check the minimal required parameters for this handle.
 	if (address === undefined) {
 		response.end(JSON.stringify({
 			status: 'Parameters are incomplete'
@@ -1243,7 +1150,6 @@ function handleGetMinerPayoutLevel (urlParts, response) {
 		return;
 	}
 
-	// Return current miner payout level
 	redisClient.hget(`${config.coin}:workers:${address}`, 'minPayoutLevel', function (error, value) {
 		if (error) {
 			response.end(JSON.stringify({
@@ -1268,7 +1174,6 @@ function handleGetMinerPayoutLevel (urlParts, response) {
 	});
 }
 
-// Set minimum payout level
 function handleSetMinerPayoutLevel (urlParts, response) {
 	response.writeHead(200, {
 		'Access-Control-Allow-Origin': '*',
@@ -1280,7 +1185,6 @@ function handleSetMinerPayoutLevel (urlParts, response) {
 	let address = urlParts.query.address;
 	let ip = urlParts.query.ip;
 	let level = urlParts.query.level;
-	// Check the minimal required parameters for this handle.
 	if (ip === undefined || address === undefined || level === undefined) {
 		response.end(JSON.stringify({
 			status: 'Parameters are incomplete'
@@ -1288,7 +1192,6 @@ function handleSetMinerPayoutLevel (urlParts, response) {
 		return;
 	}
 
-	// Do not allow wildcards in the queries.
 	if (ip.indexOf('*') !== -1 || address.indexOf('*') !== -1) {
 		response.end(JSON.stringify({
 			status: 'Remove the wildcard from your miner address'
@@ -1321,7 +1224,6 @@ function handleSetMinerPayoutLevel (urlParts, response) {
 		return;
 	}
 
-	// Only do a modification if we have seen the IP address in combination with the wallet address.
 	minerSeenWithIPForAddress(address, ip, function (error, found) {
 		if (!found || error) {
 			response.end(JSON.stringify({
@@ -1347,11 +1249,6 @@ function handleSetMinerPayoutLevel (urlParts, response) {
 	});
 }
 
-/**
- * Miner settings: email notifications
- **/
-
-// Get destination for email notifications
 function handleGetMinerNotifications (urlParts, response) {
 	response.writeHead(200, {
 		'Access-Control-Allow-Origin': '*',
@@ -1362,7 +1259,6 @@ function handleGetMinerNotifications (urlParts, response) {
 
 	let address = urlParts.query.address;
 
-	// Check the minimal required parameters for this handle.
 	if (address === undefined) {
 		response.end(JSON.stringify({
 			status: 'Parameters are incomplete'
@@ -1370,7 +1266,6 @@ function handleGetMinerNotifications (urlParts, response) {
 		return;
 	}
 
-	// Return current email for notifications
 	redisClient.hget(`${config.coin}:notifications`, address, function (error, value) {
 		if (error) {
 			response.end(JSON.stringify({
@@ -1385,7 +1280,6 @@ function handleGetMinerNotifications (urlParts, response) {
 	});
 }
 
-// Set email notifications
 function handleSetMinerNotifications (urlParts, response) {
 	response.writeHead(200, {
 		'Access-Control-Allow-Origin': '*',
@@ -1399,7 +1293,6 @@ function handleSetMinerNotifications (urlParts, response) {
 	let ip = urlParts.query.ip;
 	let action = urlParts.query.action;
 
-	// Check the minimal required parameters for this handle.
 	if (ip === undefined || address === undefined || action === undefined) {
 		response.end(JSON.stringify({
 			status: 'Parameters are incomplete'
@@ -1407,7 +1300,6 @@ function handleSetMinerNotifications (urlParts, response) {
 		return;
 	}
 
-	// Do not allow wildcards in the queries.
 	if (ip.indexOf('*') !== -1 || address.indexOf('*') !== -1) {
 		response.end(JSON.stringify({
 			status: 'Remove the wildcard from your input'
@@ -1415,7 +1307,6 @@ function handleSetMinerNotifications (urlParts, response) {
 		return;
 	}
 
-	// Check the action
 	if (action === undefined || action === '' || (action != 'enable' && action != 'disable')) {
 		response.end(JSON.stringify({
 			status: 'Invalid action'
@@ -1423,7 +1314,6 @@ function handleSetMinerNotifications (urlParts, response) {
 		return;
 	}
 
-	// Now only do a modification if we have seen the IP address in combination with the wallet address.
 	minerSeenWithIPForAddress(address, ip, function (error, found) {
 		if (!found || error) {
 			response.end(JSON.stringify({
@@ -1473,11 +1363,6 @@ function handleSetMinerNotifications (urlParts, response) {
 	});
 }
 
-/**
- * Miner settings: telegram notifications
- **/
-
-// Get destination for telegram notifications
 function handleGetTelegramNotifications (urlParts, response) {
 	response.writeHead(200, {
 		'Access-Control-Allow-Origin': '*',
@@ -1496,7 +1381,6 @@ function handleGetTelegramNotifications (urlParts, response) {
 		return;
 	}
 
-	// Default miner address
 	if (type == 'default') {
 		redisClient.hget(config.coin + ':telegram:default', chatId, function (error, value) {
 			if (error) {
@@ -1512,7 +1396,6 @@ function handleGetTelegramNotifications (urlParts, response) {
 		});
 	}
 
-	// Blocks notification
 	if (type === 'blocks') {
 		redisClient.hget(config.coin + ':telegram:blocks', chatId, function (error, value) {
 			if (error) {
@@ -1528,7 +1411,6 @@ function handleGetTelegramNotifications (urlParts, response) {
 		});
 	}
 
-	// Miner notification
 	if (type === 'miner') {
 		if (address === undefined || address === '') {
 			response.end(JSON.stringify({
@@ -1552,7 +1434,6 @@ function handleGetTelegramNotifications (urlParts, response) {
 	}
 }
 
-// Enable/disable telegram notifications
 function handleSetTelegramNotifications (urlParts, response) {
 	response.writeHead(200, {
 		'Access-Control-Allow-Origin': '*',
@@ -1566,7 +1447,6 @@ function handleSetTelegramNotifications (urlParts, response) {
 	let action = urlParts.query.action;
 	let address = urlParts.query.address;
 
-	// Check chat id
 	if (chatId === undefined || chatId === '') {
 		response.end(JSON.stringify({
 			status: 'No chat id specified'
@@ -1574,7 +1454,6 @@ function handleSetTelegramNotifications (urlParts, response) {
 		return;
 	}
 
-	// Check action
 	if (type !== 'default' && (action === undefined || action === '' || (action != 'enable' && action != 'disable'))) {
 		response.end(JSON.stringify({
 			status: 'Invalid action'
@@ -1582,7 +1461,6 @@ function handleSetTelegramNotifications (urlParts, response) {
 		return;
 	}
 
-	// Default miner address
 	if (type == 'default') {
 		if (address === undefined || address === '') {
 			response.end(JSON.stringify({
@@ -1604,9 +1482,7 @@ function handleSetTelegramNotifications (urlParts, response) {
 		}));
 	}
 
-	// Blocks notification
 	if (type === 'blocks') {
-		// Enable
 		if (action === "enable") {
 			redisClient.hset(config.coin + ':telegram:blocks', chatId, 1, function (error, value) {
 				if (error) {
@@ -1622,7 +1498,6 @@ function handleSetTelegramNotifications (urlParts, response) {
 			}));
 		}
 
-		// Disable
 		else if (action === "disable") {
 			redisClient.hdel(config.coin + ':telegram:blocks', chatId, function (error, value) {
 				if (error) {
@@ -1639,7 +1514,6 @@ function handleSetTelegramNotifications (urlParts, response) {
 		}
 	}
 
-	// Miner notification
 	if (type === 'miner') {
 		if (address === undefined || address === '') {
 			response.end(JSON.stringify({
@@ -1656,7 +1530,6 @@ function handleSetTelegramNotifications (urlParts, response) {
 				return;
 			}
 
-			// Enable
 			if (action === "enable") {
 				redisClient.hset(config.coin + ':telegram', address, chatId, function (error, value) {
 					if (error) {
@@ -1672,7 +1545,6 @@ function handleSetTelegramNotifications (urlParts, response) {
 				}));
 			}
 
-			// Disable
 			else if (action === "disable") {
 				redisClient.hdel(config.coin + ':telegram', address, function (error, value) {
 					if (error) {
@@ -1691,9 +1563,6 @@ function handleSetTelegramNotifications (urlParts, response) {
 	}
 }
 
-/**
- * Return miners hashrate
- **/
 function handleGetMinersHashrate (response) {
 	let data = {};
 	for (let miner in minersHashrate) {
@@ -1716,9 +1585,6 @@ function handleGetMinersHashrate (response) {
 	response.end(reply);
 }
 
-/**
- * Return workers hashrate
- **/
 function handleGetWorkersHashrate (response) {
 	let data = {};
 	for (let miner in minersHashrate) {
@@ -1738,10 +1604,6 @@ function handleGetWorkersHashrate (response) {
 	response.end(reply);
 }
 
-
-/**
- * Authorize access to a secured API call
- **/
 function authorize (request, response) {
 	let sentPass = url.parse(request.url, true)
 		.query.password;
@@ -1781,13 +1643,9 @@ function authorize (request, response) {
 	return true;
 }
 
-/**
- * Administration: return pool statistics
- **/
 function handleAdminStats (response) {
 	async.waterfall([
 
-		//Get worker keys & unlocked blocks
 		function (callback) {
 			redisClient.multi([
 					['keys', `${config.coin}:workers:*`],
@@ -1802,7 +1660,6 @@ function handleAdminStats (response) {
 				});
 		},
 
-		//Get worker balances
 		function (workerKeys, blocks, callback) {
 			let redisCommands = workerKeys.map(function (k) {
 				return ['hmget', k, 'balance', 'paid'];
@@ -1882,18 +1739,13 @@ function handleAdminStats (response) {
 
 }
 
-/**
- * Administration: users list
- **/
 function handleAdminUsers (request, response) {
 	let otherCoin = url.parse(request.url, true).query.otherCoin;
 	async.waterfall([
-		// get workers Redis keys
 		function (callback) {
 			redisClient.keys(`${config.coin}:workers:*`, callback);
 		},
 
-		// get workers data
 		function (workerKeys, callback) {
 			let allCoins = config.childPools.filter(pool => pool.enabled).map(pool => {
 					return `${pool.coin}`
@@ -1948,9 +1800,6 @@ function handleAdminUsers (request, response) {
 	});
 }
 
-/**
- * Administration: pool monitoring
- **/
 function handleAdminMonitoring (response) {
 	response.writeHead("200", {
 		'Access-Control-Allow-Origin': '*',
@@ -1965,9 +1814,6 @@ function handleAdminMonitoring (response) {
 	});
 }
 
-/**
- * Administration: log file data
- **/
 function handleAdminLog (urlParts, response) {
 	let file = urlParts.query.file;
 	let filePath = config.logging.files.directory + '/' + file;
@@ -1984,9 +1830,6 @@ function handleAdminLog (urlParts, response) {
 		.pipe(response);
 }
 
-/**
- * Administration: pool ports usage
- **/
 function handleAdminPorts (request, response) {
 	async.waterfall([
 		function (callback) {
@@ -2022,9 +1865,6 @@ function handleAdminPorts (request, response) {
 	});
 }
 
-/**
- * Administration: test email notification
- **/
 function handleTestEmailNotification (urlParts, response) {
 	let email = urlParts.query.email;
 	if (!config.email) {
@@ -2052,9 +1892,6 @@ function handleTestEmailNotification (urlParts, response) {
 	}));
 }
 
-/**
- * Administration: test telegram notification
- **/
 function handleTestTelegramNotification (urlParts, response) {
 	if (!config.telegram) {
 		response.end(JSON.stringify({
@@ -2087,11 +1924,6 @@ function handleTestTelegramNotification (urlParts, response) {
 	}));
 }
 
-/**
- * RPC monitoring of daemon and wallet
- **/
-
-// Start RPC monitoring
 function startRpcMonitoring (rpc, module, method, interval) {
 	setInterval(function () {
 		rpc(method, {}, function (error, response) {
@@ -2114,22 +1946,10 @@ function startRpcMonitoring (rpc, module, method, interval) {
 	}, interval * 1000);
 }
 
-// function startPriceMonitoring(rpc, module, method, endPoint, interval, coin) {
-//     setInterval(function() {
-//         let tickers = ['ARQ-BTC', 'ARQ-LTC', 'ARQ-USD', 'ARQ-EUR', 'ARQ-CAD'] 
-//         let exchange = config.prices.source;
-//         market.get(exchange, tickers, function(data) {
-//             redisClient.set(`${config.coin}:status:prices`, JSON.stringify(data))
-//         });
-//     }, interval * 1000);
-// }
-
-// Return monitoring data key
 function getMonitoringDataKey (module) {
 	return config.coin + ':status:' + module;
 }
 
-// Initialize monitoring
 function initMonitoring () {
 	let modulesRpc = {
 		daemon: apiInterfaces.rpcDaemon,
@@ -2140,10 +1960,6 @@ function initMonitoring () {
 	let settings = '';
 	for (let module in config.monitoring) {
 		settings = config.monitoring[module];
-		// if (module === "price") {
-		//     startPriceMonitoring(modulesRpc[module], module, settings.rpcMethod, settings.checkInterval, settings.tickers )
-		//     break
-		// }
 		if (daemonType === "bytecoin" && module === "wallet" && settings.rpcMethod === "getbalance") {
 			settings.rpcMethod = "getBalance";
 		}
@@ -2153,7 +1969,6 @@ function initMonitoring () {
 	}
 }
 
-// Get monitoring data
 function getMonitoringData (callback) {
 	let modules = Object.keys(config.monitoring);
 	let redisCommands = [];
@@ -2171,18 +1986,12 @@ function getMonitoringData (callback) {
 		});
 }
 
-/**
- * Return pool public ports
- **/
 function getPublicPorts (ports) {
 	return ports.filter(function (port) {
 		return !port.hidden;
 	});
 }
 
-/**
- * Return list of pool logs file
- **/
 function getLogFiles (callback) {
 	let dir = config.logging.files.directory;
 	fs.readdir(dir, function (error, files) {
@@ -2201,9 +2010,7 @@ function getLogFiles (callback) {
 	});
 }
 
-/**
- * Check if a miner has been seen with specified IP address
- **/
+// settings changes are only accepted from an ip that has mined to that address
 function minerSeenWithIPForAddress (address, ip, callback) {
 	let ipv4_regex = /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/;
 	if (ipv4_regex.test(ip)) {
@@ -2215,9 +2022,6 @@ function minerSeenWithIPForAddress (address, ip, callback) {
 	});
 }
 
-/**
- * Parse cookies data
- **/
 function parseCookies (request) {
 	let list = {},
 		rc = request.headers.cookie;
@@ -2227,27 +2031,20 @@ function parseCookies (request) {
 		});
 	return list;
 }
-/**
- * Start pool API
- **/
 
-// Collect statistics for the first time
 collectStats();
 
-// Initialize RPC monitoring
 initMonitoring();
 
-// Enable to be bind to a certain ip or all by default
 let bindIp = config.api.bindIp ? config.api.bindIp : "0.0.0.0";
 
-// Start API on HTTP port
 let server = http.createServer(function (request, response) {
 	if (request.method.toUpperCase() === "OPTIONS") {
 		response.writeHead("204", "No Content", {
 			"access-control-allow-origin": '*',
 			"access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
 			"access-control-allow-headers": "content-type, accept",
-			"access-control-max-age": 10, // Seconds.
+			"access-control-max-age": 10,
 			"content-length": 0
 		});
 		return (response.end());
@@ -2260,7 +2057,6 @@ server.listen(config.api.port, bindIp, function () {
 	log('info', logSystem, 'API started & listening on %s port %d', [bindIp, config.api.port]);
 });
 
-// Start API on SSL port
 if (config.api.ssl) {
 	if (!config.api.sslCert) {
 		log('error', logSystem, 'Could not start API listening on %s port %d (SSL): SSL certificate not configured', [bindIp, config.api.sslPort]);
@@ -2288,7 +2084,7 @@ if (config.api.ssl) {
 					"access-control-allow-origin": '*',
 					"access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
 					"access-control-allow-headers": "content-type, accept",
-					"access-control-max-age": 10, // Seconds.
+					"access-control-max-age": 10,
 					"content-length": 0,
 					"strict-transport-security": "max-age=604800"
 				});

@@ -3,11 +3,10 @@ let async = require('async');
 let apiInterfaces = require('./apiInterfaces.js')(config.daemon, config.wallet, config.api);
 let lastHash;
 
-let POOL_NONCE_SIZE = 16 + 1; // +1 for old XMR/new TRTL bugs
+let POOL_NONCE_SIZE = 16 + 1;
 let EXTRA_NONCE_TEMPLATE = "02" + POOL_NONCE_SIZE.toString(16) + "00".repeat(POOL_NONCE_SIZE);
 let POOL_NONCE_MM_SIZE = POOL_NONCE_SIZE + utils.cnUtil.get_merged_mining_nonce_size();
 let EXTRA_NONCE_NO_CHILD_TEMPLATE = "02" + POOL_NONCE_MM_SIZE.toString(16) + "00".repeat(POOL_NONCE_MM_SIZE);
-
 
 let logSystem = 'daemon'
 let blockData = JSON.stringify({
@@ -27,9 +26,7 @@ let templateData = JSON.stringify({
 	}
 })
 
-
 require('./exceptionWriter.js')(logSystem);
-
 
 function runInterval () {
 	async.waterfall([

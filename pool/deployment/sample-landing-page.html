@@ -145,11 +145,7 @@
 	<br />
 
 	<script>
-		/**
-		 * Pool statistics
-		 **/
 
-		// Get stats from pool API
 		function getPoolStats (poolID, poolURL) {
 			let apiURL = poolURL + '/stats';
 			$.get(apiURL, function (data) {
@@ -219,7 +215,6 @@
 			});
 		}
 
-		// Update pools
 		function updatePools () {
 			getPoolStats('graft', 'https://graft.blockhashmining.com/api');
 			getPoolStats('haven', 'https://haven.blockhashmining.com/api');
@@ -229,17 +224,11 @@
 			getPoolStats('stellite', 'https://stellite.blockhashmining.com/api');
 		}
 
-		// Initialize
 		$(function () {
 			setInterval(updatePools, (30 * 1000));
 			updatePools();
 		});
 
-		/**
-		 * Strings
-		 **/
-
-		// Update Text content
 		function updateText (elementId, text) {
 			let el = document.getElementById(elementId);
 			if (el && el.textContent !== text) {
@@ -248,7 +237,6 @@
 			return el;
 		}
 
-		// Get readable hashrate
 		function getReadableHashRate (hashrate) {
 			let i = 0;
 			let byteUnits = [' H', ' KH', ' MH', ' GH', ' TH', ' PH'];

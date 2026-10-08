@@ -18,7 +18,6 @@
   background-color: darkred;
 }
 
-/* Pool Statistics */
 #poolStats .luckGood {
   color: #5eff5e;
 }
@@ -29,7 +28,6 @@
   color: #FFF500;
 }
 
-/* Users list */
 .usersList {
   word-wrap: break-word;
 }
@@ -66,7 +64,6 @@
   }
 }
 
-/* Monitoring */
 .adminMonitor code {
   white-space: normal;
 }
@@ -80,7 +77,6 @@
   white-space: nowrap;
 }
 
-/* Ports Usage */
 #portsUsage tr > td {
   vertical-align: middle;
   font-size: 0.95em;
