@@ -170,10 +170,10 @@
             <tr class="appConfig">
                 <td colspan="5">
                     <div class="collapse" id="xmrig">
-<p>Save as <code>config.json</code> next to <code>xmrig</code> and run <code>xmrig</code>. XMRig ships with original CryptoNight switched off: keep the <code>"cn/0": "cn"</code> line. After the first start XMRig adds its device settings to the file; if it ever shows <code>"cn/0": false</code> again, change it back to <code>"cn"</code>.</p>
+<p>Save as <code>config.json</code> next to <code>xmrig</code> and run <code>xmrig</code>. XMRig ships with original CryptoNight switched off. Start it once: it adds its device settings to <code>config.json</code> and reports that <code>cn/0</code> is disabled. Stop it, change <code>"cn/0": false</code> to <code>"cn/0": "cn"</code> in the section of the device you mine with, and start it again. (Setting <code>"cn"</code> before the first start does not work: XMRig resets it until its <code>"cn"</code> profile exists.)</p>
 <pre><code>{
     "autosave": true,
-    "cpu": { "enabled": true, "huge-pages": true, "cn/0": "cn" },
+    "cpu": { "enabled": true, "huge-pages": true },
     "opencl": false,
     "cuda": false,
     "pools": [
@@ -201,11 +201,11 @@
             <tr class="appConfig">
                 <td colspan="5">
                     <div class="collapse" id="xmrig-amd">
-<p>Needs the AMD GPU driver (Windows: Adrenalin; Linux: ROCm or AMDGPU OpenCL runtime). Set <code>"cpu"</code> to <code>"enabled": true</code> to mine on CPU and GPU together. XMRig ships with original CryptoNight switched off: keep the <code>"cn/0": "cn"</code> line. After the first start XMRig adds its device settings to the file; if it ever shows <code>"cn/0": false</code> again, change it back to <code>"cn"</code>.</p>
+<p>Needs the AMD GPU driver (Windows: Adrenalin; Linux: ROCm or AMDGPU OpenCL runtime). Set <code>"cpu"</code> to <code>"enabled": true</code> to mine on CPU and GPU together. XMRig ships with original CryptoNight switched off. Start it once: it adds its device settings to <code>config.json</code> and reports that <code>cn/0</code> is disabled. Stop it, change <code>"cn/0": false</code> to <code>"cn/0": "cn"</code> in the section of the device you mine with, and start it again. (Setting <code>"cn"</code> before the first start does not work: XMRig resets it until its <code>"cn"</code> profile exists.)</p>
 <pre><code>{
     "autosave": true,
     "cpu": { "enabled": false },
-    "opencl": { "enabled": true, "platform": "AMD", "cn/0": "cn" },
+    "opencl": { "enabled": true, "platform": "AMD" },
     "cuda": false,
     "pools": [
         {
@@ -232,12 +232,12 @@
             <tr class="appConfig">
                 <td colspan="5">
                     <div class="collapse" id="xmrig-nvidia">
-<p>Download XMRig and the <code>xmrig-cuda</code> plugin matching your CUDA version, and put the plugin file (<code>xmrig-cuda.dll</code> / <code>libxmrig-cuda.so</code>) next to <code>xmrig</code>. Needs the NVIDIA driver. XMRig ships with original CryptoNight switched off: keep the <code>"cn/0": "cn"</code> line. After the first start XMRig adds its device settings to the file; if it ever shows <code>"cn/0": false</code> again, change it back to <code>"cn"</code>.</p>
+<p>Download XMRig and the <code>xmrig-cuda</code> plugin matching your CUDA version, and put the plugin file (<code>xmrig-cuda.dll</code> / <code>libxmrig-cuda.so</code>) next to <code>xmrig</code>. Needs the NVIDIA driver. XMRig ships with original CryptoNight switched off. Start it once: it adds its device settings to <code>config.json</code> and reports that <code>cn/0</code> is disabled. Stop it, change <code>"cn/0": false</code> to <code>"cn/0": "cn"</code> in the section of the device you mine with, and start it again. (Setting <code>"cn"</code> before the first start does not work: XMRig resets it until its <code>"cn"</code> profile exists.)</p>
 <pre><code>{
     "autosave": true,
     "cpu": { "enabled": false },
     "opencl": false,
-    "cuda": { "enabled": true, "cn/0": "cn" },
+    "cuda": { "enabled": true },
     "pools": [
         {
             "url": "<span class="exampleHost">POOL_HOST</span>:<span class="examplePort">PORT</span>",
