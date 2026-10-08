@@ -67,6 +67,7 @@ let perIPStats = {};
 let slushMiningEnabled = config.poolServer.slushMining && config.poolServer.slushMining.enabled;
 
 let pplnsEnabled = !!(config.poolServer.pplns && config.poolServer.pplns.enabled);
+let soloMiningEnabled = config.poolServer.soloMining !== false;
 let pplnsWindowFactor = pplnsEnabled ? (config.poolServer.pplns.windowFactor || 2) : 0;
 let pplnsMaxShares = pplnsEnabled ? (config.poolServer.pplns.maxShares || 500000) : 0;
 if (pplnsEnabled && slushMiningEnabled) {
@@ -594,6 +595,10 @@ function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage
 			let calculated = utils.determineRewardData(login);
 			login = calculated.address;
 			let rewardType = calculated.rewardType;
+			if (rewardType === 'solo' && !soloMiningEnabled) {
+				sendReply('Solo mining is not available on this pool');
+				return;
+			}
 
 			let address = '';
 			let paymentid = null;

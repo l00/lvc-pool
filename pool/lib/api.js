@@ -375,6 +375,8 @@ function collectStats () {
 				priceCurrency: config.prices ? config.prices.currency : 'USD',
 				paymentIdSeparator: config.poolServer.paymentId && config.poolServer.paymentId.addressSeparator ? config.poolServer.paymentId.addressSeparator : ".",
 				fixedDiffEnabled: config.poolServer.fixedDiff.enabled,
+				soloMiningEnabled: config.poolServer.soloMining !== false,
+				mergedMiningEnabled: !!(config.poolServer.mergedMining && Array.isArray(config.childPools) && config.childPools.length > 0),
 				fixedDiffSeparator: config.poolServer.fixedDiff.addressSeparator,
 				sendEmails: config.email ? config.email.enabled : false,
 				blocksChartEnabled: (config.charts.blocks && config.charts.blocks.enabled),

@@ -95,7 +95,8 @@
       "enabled": true,
       "windowFactor": 2,
       "maxShares": 500000
-    }
+    },
+    "soloMining": false
   },
   "payments": {
     "enabled": true,

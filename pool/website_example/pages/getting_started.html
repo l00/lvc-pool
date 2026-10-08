@@ -20,10 +20,13 @@
         <h4 class="push-up-15"><span data-tkey="password">Password</span></h4>
         <div class="card padding-l-10 padding-r-10">
                 <div class="stats">
+                    <div class="noMergedOnly"><i class="fa fa-server"></i> <span data-tkey="fixedDiff2">Worker Name</span>: <span><u data-tkey="addrDiff2">workerName</u> (optional)</span></div>
+                    <div class="mergedOnly" style="display:none">
                     <div><i class="fa fa-key"></i> <span data-tkey="usernameDesc2">Use your <strong  id="paymentChildCoins">Iridium OR Nibble wallet address</strong> in the password field for merged mining.</span></div>
                     <div id="paymentId"><i class="fa fa-exchange"></i> <span data-tkey="paymentId">Exchange Payment ID</span>: <span><u data-tkey="childaddress">child address</u><span id="paymentIdSeparator">+</span><u data-tkey="addrPaymentId">paymentID</u></span></div>
                     <div><i class="fa fa-server"></i> <span data-tkey="fixedDiff2">Worker Name</span>: <span><u data-tkey="childaddress">child-address</u><span id="fixedDiffSeparator2">@</span><u data-tkey="addrDiff2">workerName</u></span></div>
                     <div><i class="fa fa-exchange fa-server"></i> <span data-tkey="fixedDiff2PaymentId">Payment ID and Worker Name</span>: <span><u data-tkey="childaddress">child-address</u>+<u data-tkey="">paymentID</u><span id="fixedDiffSeparator2">@</span><u data-tkey="addrDiff2">workerName</u></span></div>
+                    </div>
                 </div>
         </div>
     </div>
@@ -65,7 +68,7 @@
                 <select class="form-control" id="gMiningPort"></select>
             </div>
         </div>
-        <div class="col-sm-3 col-xs-4">
+        <div id="soloOption" class="col-sm-3 col-xs-4" style="display:none">
             <div class="input-group push-down-5">
                 <span style="white-space: nowrap;">Solo Mining
                     <label><input type="checkbox" name="solo" id="gSolo" value="1" title="Check if want to mine both pools solo"></label>
@@ -90,13 +93,13 @@
                 <input class="form-control" id="gPaymentID" type="text" data-tplaceholder="paymentIdField" placeholder="Parent Payment ID for exchanges (optional)" />
             </div>
         </div>
-        <div class="col-sm-6 col-xs-12">
+        <div class="col-sm-6 col-xs-12 mergedOnly" style="display:none">
             <div class="input-group push-down-5">
                 <span class="input-group-addon"><i class="fa fa-key"></i></span>
-                <input class="form-control" id="gChildAddress" type="text" data-tplaceholder="childAddressField" placeholder="Child Address" required="required" />
+                <input class="form-control" id="gChildAddress" type="text" data-tplaceholder="childAddressField" placeholder="Child Address (optional)" />
             </div>
         </div>
-        <div class="col-sm-6 col-xs-12">
+        <div class="col-sm-6 col-xs-12 mergedOnly" style="display:none">
             <div class="input-group push-down-5">
                 <span class="input-group-addon"><i class="fa fa-exchange"></i></span>
                 <input class="form-control" id="gChildPaymentID" type="text" data-tplaceholder="childPaymentIdField" placeholder="Child Payment ID for exchanges (optional)" />
@@ -307,6 +310,10 @@ currentPage = {
         let childCoins = Object.keys(mergedStats).join(' or ')
         updateText('paymentChildCoins', `${childCoins} wallet address`);
         if (!lastStats.config.fixedDiffEnabled) $('#fixedDiff').hide();
+        var mergedMining = !!lastStats.config.mergedMiningEnabled;
+        $('.mergedOnly').toggle(mergedMining);
+        $('.noMergedOnly').toggle(!mergedMining);
+        $('#soloOption').toggle(lastStats.config.soloMiningEnabled !== false);
 
         var coin = lastStats.config.coin.toLowerCase() || null;
         var cnAlgorithm = lastStats.config.cnAlgorithm || "cryptonight";
@@ -440,12 +447,15 @@ $('#generateConf').click(function() {
     if ($('input[name=solo]').is(':checked')) login = `solo:${login}`
     updateTextClasses('exampleLogin', login);
 
-    var childLogin = childAddress ? childAddress : 'YOUR_CHILD_WALLET_ADDRESS';
-    if (childPaymentID) childLogin = childLogin + lastStats.config.paymentIdSeparator + childPaymentID;
-    if (difficulty) childLogin = childLogin + lastStats.config.fixedDiffSeparator + difficulty;
-    if (workerName) childLogin = `${childLogin}@${workerName}`
+    var password = workerName || 'x';
+    if (lastStats.config.mergedMiningEnabled) {
+        password = childAddress ? childAddress : 'YOUR_CHILD_WALLET_ADDRESS';
+        if (childPaymentID) password = password + lastStats.config.paymentIdSeparator + childPaymentID;
+        if (difficulty) password = password + lastStats.config.fixedDiffSeparator + difficulty;
+        if (workerName) password = `${password}@${workerName}`
+    }
 
-    updateTextClasses('examplePassword', childLogin);
+    updateTextClasses('examplePassword', password);
 });
 
 </script>
