@@ -138,7 +138,7 @@
   },
   "daemon": {
     "host": "131.123.42.246",
-    "port": 18081
+    "port": 21725
   },
   "wallet": {
     "host": "wallet",

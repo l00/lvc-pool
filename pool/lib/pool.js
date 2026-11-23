@@ -372,7 +372,6 @@ function Miner (rewardType, childRewardType, id, childPoolIndex, login, pass, ip
 	this.noRetarget = noRetarget;
 	this.difficulty = startingDiff;
 	this.validJobs = [];
-	this.workerName = pass;
 
 	this.shareTimeRing = utils.ringBuffer(16);
 	this.lastShareTime = Date.now() / 1000 | 0;
@@ -529,8 +528,9 @@ Miner.prototype = {
 		let stats = perIPStats[this.ip];
 		validShare ? stats.validShares++ : stats.invalidShares++;
 
-		if (stats.validShares + stats.invalidShares >= config.poolServer.banning.checkThreshold) {
-			if (stats.invalidShares / stats.validShares >= config.poolServer.banning.invalidPercent / 100) {
+		let totalShares = stats.validShares + stats.invalidShares;
+		if (totalShares >= config.poolServer.banning.checkThreshold) {
+			if (stats.invalidShares / totalShares >= config.poolServer.banning.invalidPercent / 100) {
 				validShare ? this.validShares++ : this.invalidShares++;
 				log('warn', logSystem, 'Banned %s@%s', [this.login, this.ip]);
 				bannedIPs[this.ip] = Date.now();
@@ -774,12 +774,8 @@ function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage
 			if (!noncePattern.test(params.nonce)) {
 				let minerText = miner ? (' ' + miner.login + '@' + miner.ip) : '';
 				log('warn', logSystem, 'Malformed nonce: ' + JSON.stringify(params) + ' from ' + minerText);
-				perIPStats[miner.ip] = {
-					validShares: 0,
-					invalidShares: 999999
-				};
 				miner.checkBan(false);
-				sendReply('Duplicate share1');
+				sendReply('Malformed nonce');
 				return;
 			}
 
@@ -789,12 +785,8 @@ function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage
 				if (job.submissions.indexOf(params.nonce) !== -1) {
 					let minerText = miner ? (' ' + miner.login + '@' + miner.ip) : '';
 					log('warn', logSystem, 'Duplicate share: ' + JSON.stringify(params) + ' from ' + minerText);
-					perIPStats[miner.ip] = {
-						validShares: 0,
-						invalidShares: 999999
-					};
 					miner.checkBan(false);
-					sendReply('Duplicate share2');
+					sendReply('Duplicate share');
 					return;
 				}
 
@@ -803,24 +795,16 @@ function handleMinerMethod (method, params, ip, portData, sendReply, pushMessage
 				if (!Number.isInteger(params.poolNonce) || !Number.isInteger(params.workerNonce)) {
 					let minerText = miner ? (' ' + miner.login + '@' + miner.ip) : '';
 					log('warn', logSystem, 'Malformed nonce: ' + JSON.stringify(params) + ' from ' + minerText);
-					perIPStats[miner.ip] = {
-						validShares: 0,
-						invalidShares: 999999
-					};
 					miner.checkBan(false);
-					sendReply('Duplicate share3');
+					sendReply('Malformed nonce');
 					return;
 				}
 				let nonce_test = `${params.nonce}_${params.poolNonce}_${params.workerNonce}`;
 				if (job.submissions.indexOf(nonce_test) !== -1) {
 					let minerText = miner ? (' ' + miner.login + '@' + miner.ip) : '';
 					log('warn', logSystem, 'Duplicate share: ' + JSON.stringify(params) + ' from ' + minerText);
-					perIPStats[miner.ip] = {
-						validShares: 0,
-						invalidShares: 999999
-					};
 					miner.checkBan(false);
-					sendReply('Duplicate share4');
+					sendReply('Duplicate share');
 					return;
 				}
 				job.submissions.push(nonce_test);
@@ -920,7 +904,7 @@ function newConnectedWorker (miner) {
 		redisClient.multi(redisCommands)
 			.exec(function (error, replies) {
 				if (error) {
-					log('error', logSystem, 'Failed to clear childCoins from parent in redis %j \n %j', [err, redisCommands]);
+					log('error', logSystem, 'Failed to clear childCoins from parent in redis %j \n %j', [error, redisCommands]);
 				}
 			})
 
@@ -935,7 +919,7 @@ function removeConnectedWorker (miner, reason) {
 	redisClient.hincrby(`${config.coin}:ports:${miner.port}`, 'users', '-1');
 	if (mergedMining) {
 		redisClient.hincrby(`${config.childPools[miner.activeChildPool].coin}:ports:${miner.port}`, 'users', '-1');
-		redisClient.hincrby(`${config.childPools[miner.activeChildPool].coin}:active_connections${miner.childRewardTypeAsKey}`, `${miner.childLogin}~${miner.workerName}`, 1, function (error, connectedWorkers) {});
+		redisClient.hincrby(`${config.childPools[miner.activeChildPool].coin}:active_connections${miner.childRewardTypeAsKey}`, `${miner.childLogin}~${miner.workerName}`, -1, function (error, connectedWorkers) {});
 	}
 
 	redisClient.hincrby(`${config.coin}:active_connections${miner.rewardTypeAsKey}`, `${miner.login}~${miner.workerName}`, -1, function (error, connectedWorkers) {

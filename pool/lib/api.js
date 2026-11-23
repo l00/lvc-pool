@@ -433,8 +433,9 @@ function collectStats () {
 							if (blockTimestamp < beginAtTimestamp) {
 								continue;
 							}
-							let date = utils.dateFormat(new Date(blockTimestamp * 1000), 'yyyy-mm-dd');
-							if (chartDays === 1) utils.dateFormat(new Date(blockTimestamp * 1000), 'yyyy-mm-dd HH:00');
+							let date = chartDays === 1
+								? utils.dateFormat(new Date(blockTimestamp * 1000), 'yyyy-mm-dd HH:00')
+								: utils.dateFormat(new Date(blockTimestamp * 1000), 'yyyy-mm-dd');
 							if (block[0] === 'prop') {
 								if (!blocksCount[date]) blocksCount[date] = 0;
 								blocksCount[date]++;
@@ -450,8 +451,9 @@ function collectStats () {
 								if (blockTimestamp < beginAtTimestamp) {
 									continue;
 								}
-								let date = utils.dateFormat(new Date(blockTimestamp * 1000), 'yyyy-mm-dd');
-								if (chartDays === 1) utils.dateFormat(new Date(blockTimestamp * 1000), 'yyyy-mm-dd HH:00');
+								let date = chartDays === 1
+									? utils.dateFormat(new Date(blockTimestamp * 1000), 'yyyy-mm-dd HH:00')
+									: utils.dateFormat(new Date(blockTimestamp * 1000), 'yyyy-mm-dd');
 								if (!blocksCount[date]) blocksCount[date] = 0;
 								blocksCount[date]++;
 							}
@@ -594,17 +596,6 @@ function getLastBlockData (callback) {
 			hash: blockHeader.hash
 		});
 	});
-}
-
-function handleGetApis (callback) {
-	let apis = {};
-	config.childPools.forEach(pool => {
-		if (pool.enabled)
-			apis[pool.coin] = {
-				api: pool.api
-			}
-	})
-	callback(apis)
 }
 
 function broadcastLiveStats () {
@@ -1821,6 +1812,7 @@ function handleAdminLog (urlParts, response) {
 	let filePath = config.logging.files.directory + '/' + file;
 	if (!file.match(/^\w+\.log$/)) {
 		response.end('wrong log file');
+		return;
 	}
 	response.writeHead(200, {
 		'Content-Type': 'text/plain',
