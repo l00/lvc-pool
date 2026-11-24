@@ -372,6 +372,7 @@ function Miner (rewardType, childRewardType, id, childPoolIndex, login, pass, ip
 	this.noRetarget = noRetarget;
 	this.difficulty = startingDiff;
 	this.validJobs = [];
+	this.workerName = pass;
 
 	this.shareTimeRing = utils.ringBuffer(16);
 	this.lastShareTime = Date.now() / 1000 | 0;
